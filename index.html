@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nai Nai | Tesoros del Mar</title>
+
+    <!-- Tailwind CSS para un diseño moderno y adaptable -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts para una tipografía más bonita -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pacifico&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* Usamos las fuentes que hemos importado */
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .font-display {
+        font-family: "Pacifico", cursive;
+      }
+      /* Estilo para el loader/spinner, sin cambios */
+      .loader {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      /* Pequeño ajuste para que el scroll sea más suave */
+      html {
+        scroll-behavior: smooth;
+      }
+    </style>
+  </head>
+  <body class="text-gray-800 bg-amber-50">
+    <!-- Contenedor principal de la aplicación -->
+    <div id="app-container" class="container p-4 mx-auto sm:p-6 lg:p-8">
+      <!-- Cabecera y Navegación (Diseño Mobile-First) -->
+      <header
+        class="flex flex-col items-center pb-6 mb-8 text-center border-b-2 border-amber-200"
+      >
+        <div class="mb-4">
+          <h1 class="text-5xl font-display text-cyan-700">Nai Nai</h1>
+          <p class="-mt-1 text-gray-500">Tesoros del Mar</p>
+        </div>
+        <nav class="flex space-x-4">
+          <!-- Botones con más padding para ser más fáciles de tocar en móvil -->
+          <button
+            id="show-shop-btn"
+            class="px-5 py-2.5 text-sm font-semibold bg-cyan-600 text-white rounded-full shadow-md hover:bg-cyan-700 transition-all"
+          >
+            Tienda
+          </button>
+          <!-- El botón de Administrar ahora está oculto por defecto -->
+          <button
+            id="show-admin-btn"
+            class="px-5 py-2.5 text-sm font-semibold bg-white text-gray-700 rounded-full shadow-md hover:bg-gray-100 transition-all hidden"
+          >
+            Administrar
+          </button>
+        </nav>
+      </header>
+
+      <!-- SECCIÓN TIENDA (PÚBLICA) -->
+      <main id="shop-page">
+        <h2 class="mb-8 text-3xl font-bold text-center text-cyan-800">
+          Nuestros Collares
+        </h2>
+        <!-- El grid es mobile-first: 1 columna por defecto, y más en pantallas grandes -->
+        <div
+          id="product-grid"
+          class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-8"
+        >
+          <!-- Los productos se cargarán aquí desde la base de datos -->
+          <div id="loading-products" class="py-10 text-center col-span-full">
+            <div class="inline-block loader"></div>
+            <p class="mt-4 text-gray-600">Cargando tesoros...</p>
+          </div>
+        </div>
+      </main>
+
+      <!-- SECCIÓN ADMINISTRACIÓN (PRIVADA) -->
+      <section id="admin-page" class="hidden">
+        <div class="max-w-xl p-6 mx-auto bg-white shadow-lg sm:p-8 rounded-2xl">
+          <h2 class="mb-6 text-3xl font-bold text-center text-cyan-800">
+            Añadir Nuevo Tesoro
+          </h2>
+          <form id="add-product-form" class="space-y-6">
+            <div>
+              <label
+                for="product-name"
+                class="block mb-1 text-sm font-medium text-gray-700"
+                >Nombre del Collar</label
+              >
+              <input
+                type="text"
+                id="product-name"
+                required
+                class="w-full px-4 py-3 transition border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500"
+                placeholder="Ej: Collar 'Ola Turquesa'"
+              />
+            </div>
+
+            <div>
+              <label
+                for="product-image"
+                class="block mb-1 text-sm font-medium text-gray-700"
+                >Foto del Producto</label
+              >
+              <input
+                type="file"
+                id="product-image"
+                accept="image/*"
+                required
+                class="w-full text-sm text-gray-500 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100"
+              />
+              <img
+                id="image-preview"
+                src=""
+                alt="Previsualización de la imagen"
+                class="hidden w-auto mx-auto mt-4 rounded-lg shadow-sm max-h-60"
+              />
+            </div>
+
+            <div>
+              <label
+                for="product-description"
+                class="block mb-1 text-sm font-medium text-gray-700"
+                >Descripción</label
+              >
+              <div class="relative">
+                <textarea
+                  id="product-description"
+                  rows="4"
+                  required
+                  class="w-full px-4 py-3 transition border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500"
+                  placeholder="Describe brevemente el collar. ¿Qué conchas usaste? ¿En qué te inspiraste?"
+                ></textarea>
+                <button
+                  type="button"
+                  id="gemini-helper-btn"
+                  class="absolute bottom-3 right-3 px-3 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-purple-500 to-pink-500 rounded-full hover:from-purple-600 hover:to-pink-600 transition-all shadow-md"
+                >
+                  ✨ ¡Ayúdame!
+                </button>
+              </div>
+              <div id="gemini-loader" class="items-center hidden mt-2">
+                <div
+                  class="loader !w-5 !h-5 !border-2 !border-t-purple-500"
+                ></div>
+                <p class="ml-2 text-sm text-gray-500">
+                  Creando una descripción mágica...
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <label
+                for="product-price"
+                class="block mb-1 text-sm font-medium text-gray-700"
+                >Precio (€)</label
+              >
+              <input
+                type="number"
+                id="product-price"
+                step="0.01"
+                required
+                class="w-full px-4 py-3 transition border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500"
+                placeholder="Ej: 15.50"
+              />
+            </div>
+
+            <button
+              type="submit"
+              id="submit-product-btn"
+              class="flex items-center justify-center w-full px-4 py-3 font-bold text-white transition-colors rounded-lg shadow-lg bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400"
+            >
+              <span id="submit-btn-text">Añadir Producto a la Tienda</span>
+              <div
+                id="submit-loader"
+                class="loader !w-6 !h-6 !border-2 hidden"
+              ></div>
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Mensaje de notificación -->
+      <div
+        id="notification"
+        class="fixed hidden px-5 py-3 text-white transition-all duration-300 transform translate-y-16 bg-green-500 rounded-lg shadow-xl bottom-5 right-5"
+      >
+        Producto añadido con éxito!
+      </div>
+    </div>
+
+    <!-- Cargar configuración externa -->
+    <script src="config.js"></script>
+
+    <!-- Firebase SDK (sin cambios en la lógica) -->
+    <script type="module">
+      // Importaciones de Firebase
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+      import {
+        getAuth,
+        signInAnonymously,
+        signInWithCustomToken,
+        onAuthStateChanged,
+      } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+      import {
+        getFirestore,
+        collection,
+        addDoc,
+        onSnapshot,
+        query,
+        setLogLevel,
+        orderBy,
+      } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+      // --- CONFIGURACIÓN DE FIREBASE ---
+      const appId =
+        typeof __app_id !== "undefined" ? __app_id : "default-app-id";
+
+      // CÓDIGO CORREGIDO: Se asigna el objeto de configuración directamente.
+      const firebaseConfig = window.CONFIG.firebase;
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const auth = getAuth(app);
+      setLogLevel("debug");
+
+      let userId = null;
+      let productsCollection;
+
+      // --- AUTENTICACIÓN Y PREPARACIÓN ---
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          userId = user.uid;
+          productsCollection = collection(
+            db,
+            "artifacts",
+            appId,
+            "public",
+            "data",
+            "products"
+          );
+          fetchProducts();
+        } else {
+          try {
+            if (
+              typeof __initial_auth_token !== "undefined" &&
+              __initial_auth_token
+            ) {
+              await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+              await signInAnonymously(auth);
+            }
+          } catch (error) {
+            console.error("Error de autenticación:", error);
+            document.getElementById("loading-products").innerText =
+              "Error al conectar con la base de datos.";
+          }
+        }
+      });
+
+      // --- NAVEGACIÓN Y SEGURIDAD SIMPLE ---
+      const shopPage = document.getElementById("shop-page");
+      const adminPage = document.getElementById("admin-page");
+      const showShopBtn = document.getElementById("show-shop-btn");
+      const showAdminBtn = document.getElementById("show-admin-btn");
+
+      // NUEVA LÓGICA: Mostrar el botón de admin solo si la URL contiene el parámetro correcto
+      const urlParams = new URLSearchParams(window.location.search);
+      // Para ver el botón, la URL debe ser: tu-pagina.html?admin=nai
+      if (urlParams.get("admin") === "nai") {
+        showAdminBtn.classList.remove("hidden");
+      }
+
+      showShopBtn.addEventListener("click", () => {
+        shopPage.classList.remove("hidden");
+        adminPage.classList.add("hidden");
+        showShopBtn.className =
+          "px-5 py-2.5 text-sm font-semibold bg-cyan-600 text-white rounded-full shadow-md hover:bg-cyan-700 transition-all";
+        showAdminBtn.className =
+          "px-5 py-2.5 text-sm font-semibold bg-white text-gray-700 rounded-full shadow-md hover:bg-gray-100 transition-all";
+        // El botón de admin puede volver a ocultarse si ya estaba oculto
+        if (urlParams.get("admin") !== "nai") {
+          showAdminBtn.classList.add("hidden");
+        }
+      });
+
+      showAdminBtn.addEventListener("click", () => {
+        shopPage.classList.add("hidden");
+        adminPage.classList.remove("hidden");
+        showAdminBtn.className =
+          "px-5 py-2.5 text-sm font-semibold bg-cyan-600 text-white rounded-full shadow-md hover:bg-cyan-700 transition-all";
+        showShopBtn.className =
+          "px-5 py-2.5 text-sm font-semibold bg-white text-gray-700 rounded-full shadow-md hover:bg-gray-100 transition-all";
+      });
+
+      // --- LÓGICA DE LA TIENDA ---
+      const productGrid = document.getElementById("product-grid");
+      const loadingProducts = document.getElementById("loading-products");
+
+      function fetchProducts() {
+        if (!productsCollection) return;
+        // Ordenar por fecha de creación para que los más nuevos salgan primero
+        const q = query(productsCollection, orderBy("createdAt", "desc"));
+
+        onSnapshot(
+          q,
+          (snapshot) => {
+            loadingProducts.classList.add("hidden");
+            productGrid.innerHTML = "";
+            if (snapshot.empty) {
+              productGrid.innerHTML = `<p class="py-10 text-center text-gray-500 col-span-full">Aún no hay ningún tesoro a la venta. ¡Añade el primero!</p>`;
+            } else {
+              snapshot.docs.forEach((doc) => {
+                const product = doc.data();
+                // Plantilla de la tarjeta de producto mejorada
+                const productCard = `
+                            <div class="overflow-hidden transition-all duration-300 transform bg-white shadow-lg rounded-xl group hover:-translate-y-1">
+                                <div class="w-full h-56 overflow-hidden sm:h-64">
+                                     <img src="${product.imageUrl}" alt="${product.name}" class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105">
+                                </div>
+                                <div class="p-5">
+                                    <h3 class="text-lg font-bold truncate text-cyan-900">${product.name}</h3>
+                                    <p class="h-16 mt-2 overflow-hidden text-sm text-gray-600">${product.description}</p>
+                                    <p class="mt-4 text-2xl font-bold text-right text-cyan-700">${product.price} €</p>
+                                </div>
+                            </div>
+                        `;
+                productGrid.innerHTML += productCard;
+              });
+            }
+          },
+          (error) => {
+            console.error("Error al cargar productos: ", error);
+            loadingProducts.innerText = "Error al cargar los productos.";
+          }
+        );
+      }
+
+      // --- LÓGICA DEL PANEL DE ADMINISTRACIÓN ---
+      const addProductForm = document.getElementById("add-product-form");
+      const productImageInput = document.getElementById("product-image");
+      const imagePreview = document.getElementById("image-preview");
+      const submitBtn = document.getElementById("submit-product-btn");
+      const submitBtnText = document.getElementById("submit-btn-text");
+      const submitLoader = document.getElementById("submit-loader");
+
+      productImageInput.addEventListener("change", () => {
+        const file = productImageInput.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            imagePreview.src = e.target.result;
+            imagePreview.classList.remove("hidden");
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      addProductForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!userId) {
+          alert("Debes estar autenticado para añadir productos.");
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtnText.classList.add("hidden");
+        submitLoader.classList.remove("hidden");
+
+        const name = document.getElementById("product-name").value;
+        const description = document.getElementById(
+          "product-description"
+        ).value;
+        const price = document.getElementById("product-price").value;
+        const imageFile = productImageInput.files[0];
+
+        const reader = new FileReader();
+        reader.readAsDataURL(imageFile);
+        reader.onloadend = async () => {
+          const imageUrl = reader.result;
+          try {
+            await addDoc(productsCollection, {
+              name,
+              description,
+              price: parseFloat(price).toFixed(2),
+              imageUrl,
+              createdAt: new Date(),
+              ownerId: userId,
+            });
+
+            addProductForm.reset();
+            imagePreview.classList.add("hidden");
+            showNotification("¡Tesoro añadido con éxito!");
+          } catch (error) {
+            console.error("Error al añadir el producto: ", error);
+            alert("Hubo un error al guardar el producto.");
+          } finally {
+            submitBtn.disabled = false;
+            submitBtnText.classList.remove("hidden");
+            submitLoader.classList.add("hidden");
+          }
+        };
+      });
+
+      // --- INTEGRACIÓN CON GEMINI ---
+      const geminiHelperBtn = document.getElementById("gemini-helper-btn");
+      const productDescriptionTextarea = document.getElementById(
+        "product-description"
+      );
+      const geminiLoader = document.getElementById("gemini-loader");
+
+      geminiHelperBtn.addEventListener("click", async () => {
+        const currentDescription = productDescriptionTextarea.value;
+        if (currentDescription.trim().length < 10) {
+          alert(
+            "Por favor, escribe primero una idea o descripción básica (al menos 10 caracteres)."
+          );
+          return;
+        }
+
+        geminiLoader.classList.remove("hidden");
+        geminiHelperBtn.disabled = true;
+
+        const prompt = `Re-escribe la siguiente descripción para un collar de conchas hecho a mano para una marca llamada 'Nai Nai Tesoros del Mar'. Hazla corta (2-3 frases), atractiva y enfocada en vender, usando un tono poético y evocador del mar. Descripción original: "${currentDescription}"`;
+
+        try {
+          const text = await generateTextWithGemini(prompt);
+          productDescriptionTextarea.value = text;
+        } catch (error) {
+          console.error("Error con Gemini:", error);
+          alert("No se pudo generar la descripción. Inténtalo de nuevo.");
+        } finally {
+          geminiLoader.classList.add("hidden");
+          geminiHelperBtn.disabled = false;
+        }
+      });
+
+      async function generateTextWithGemini(prompt) {
+        const apiKey = window.CONFIG.gemini.apiKey; // Usar la clave del archivo de configuración
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        const payload = {
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+        };
+
+        let response;
+        let result;
+        let retries = 3;
+        let delay = 1000;
+
+        for (let i = 0; i < retries; i++) {
+          try {
+            response = await fetch(apiUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+            if (response.ok) {
+              result = await response.json();
+              break;
+            }
+          } catch (error) {
+            console.warn(
+              `Intento ${i + 1} fallido. Reintentando en ${delay}ms...`
+            );
+          }
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          delay *= 2;
+        }
+
+        if (!result || !result.candidates || !result.candidates.length === 0) {
+          throw new Error("Respuesta inválida de la API de Gemini.");
+        }
+        return result.candidates[0].content.parts[0].text;
+      }
+
+      // --- UTILIDADES ---
+      const notification = document.getElementById("notification");
+      function showNotification(message) {
+        notification.textContent = message;
+        notification.classList.remove("hidden");
+        // Pequeña animación de entrada
+        setTimeout(() => {
+          notification.classList.remove("translate-y-16");
+        }, 10);
+
+        // Ocultar después de 3 segundos
+        setTimeout(() => {
+          notification.classList.add("translate-y-16");
+          setTimeout(() => notification.classList.add("hidden"), 300);
+        }, 3000);
+      }
+    </script>
+  </body>
+</html>
