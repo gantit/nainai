@@ -1,8 +1,8 @@
-name: Deploy static content to Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ["main"]
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
@@ -15,35 +15,40 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        
-      - name: Create production config
+
+      - name: Create config file with secrets
         run: |
-          cp config.production.js config.js
-          sed -i 's/{{FIREBASE_API_KEY}}/${{ secrets.FIREBASE_API_KEY }}/g' config.js
-          sed -i 's/{{FIREBASE_AUTH_DOMAIN}}/${{ secrets.FIREBASE_AUTH_DOMAIN }}/g' config.js
-          sed -i 's/{{FIREBASE_PROJECT_ID}}/${{ secrets.FIREBASE_PROJECT_ID }}/g' config.js
-          sed -i 's/{{FIREBASE_STORAGE_BUCKET}}/${{ secrets.FIREBASE_STORAGE_BUCKET }}/g' config.js
-          sed -i 's/{{FIREBASE_MESSAGING_SENDER_ID}}/${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}/g' config.js
-          sed -i 's/{{FIREBASE_APP_ID}}/${{ secrets.FIREBASE_APP_ID }}/g' config.js
-          sed -i 's/{{FIREBASE_MEASUREMENT_ID}}/${{ secrets.FIREBASE_MEASUREMENT_ID }}/g' config.js
-          sed -i 's/{{GEMINI_API_KEY}}/${{ secrets.GEMINI_API_KEY }}/g' config.js
-        
+          cat > config.js << 'EOF'
+          const CONFIG = {
+            firebase: {
+              apiKey: "${{ secrets.FIREBASE_API_KEY }}",
+              authDomain: "${{ secrets.FIREBASE_AUTH_DOMAIN }}",
+              projectId: "${{ secrets.FIREBASE_PROJECT_ID }}",
+              storageBucket: "${{ secrets.FIREBASE_STORAGE_BUCKET }}",
+              messagingSenderId: "${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}",
+              appId: "${{ secrets.FIREBASE_APP_ID }}",
+              measurementId: "${{ secrets.FIREBASE_MEASUREMENT_ID }}"
+            },
+            gemini: {
+              apiKey: "${{ secrets.GEMINI_API_KEY }}"
+            }
+          };
+          window.CONFIG = CONFIG;
+          EOF
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
-        
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
-          
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
