@@ -10,13 +10,13 @@ const CONFIG = {
     storageBucket: "{{FIREBASE_STORAGE_BUCKET}}",
     messagingSenderId: "{{FIREBASE_MESSAGING_SENDER_ID}}",
     appId: "{{FIREBASE_APP_ID}}",
-    measurementId: "{{FIREBASE_MEASUREMENT_ID}}"
+    measurementId: "{{FIREBASE_MEASUREMENT_ID}}",
   },
-  
+
   // API Key de Gemini
   gemini: {
-    apiKey: "{{GEMINI_API_KEY}}"
-  }
+    apiKey: "{{GEMINI_API_KEY}}",
+  },
 };
 
 // Exportar la configuración para uso en el HTML

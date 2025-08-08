@@ -8,10 +8,10 @@ const CONFIG = {
     storageBucket: "test-project.appspot.com",
     messagingSenderId: "123456789",
     appId: "1:123456789:web:abcdefghijklmnop",
-    measurementId: "G-XXXXXXXXXX"
+    measurementId: "G-XXXXXXXXXX",
   },
   gemini: {
-    apiKey: "AIzaSyBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-  }
+    apiKey: "AIzaSyBXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  },
 };
 window.CONFIG = CONFIG;
