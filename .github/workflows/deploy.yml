@@ -16,14 +16,18 @@ concurrency:
 
 jobs:
   build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Create config file with secrets
+      - name: Create config file with real API keys
         run: |
-          cat > config.js << 'EOF'
+          cat > config.temp.js << 'EOF'
+          // Configuración para producción con variables de entorno
           const CONFIG = {
             firebase: {
               apiKey: "${{ secrets.FIREBASE_API_KEY }}",
