@@ -211,8 +211,6 @@
 
     <!-- Cargar configuración externa -->
     <script src="config.temp.js"></script>
-
-    <!-- Firebase SDK (sin cambios en la lógica) -->
     <script type="module">
       // Importaciones de Firebase
       import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -231,14 +229,12 @@
         setLogLevel,
         orderBy,
       } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+      // Eliminado Firebase Storage
 
       // --- CONFIGURACIÓN DE FIREBASE ---
       const appId =
         typeof __app_id !== "undefined" ? __app_id : "default-app-id";
-
-      // CÓDIGO CORREGIDO: Se asigna el objeto de configuración directamente.
       const firebaseConfig = window.CONFIG.firebase;
-
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
       const auth = getAuth(app);
@@ -364,15 +360,207 @@
       const submitBtnText = document.getElementById("submit-btn-text");
       const submitLoader = document.getElementById("submit-loader");
 
-      productImageInput.addEventListener("change", () => {
-        const file = productImageInput.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            imagePreview.src = e.target.result;
-            imagePreview.classList.remove("hidden");
-          };
-          reader.readAsDataURL(file);
+      // Variables para conservar el blob comprimido
+      let compressedImageBlob = null;
+      let compressedMeta = null;
+      let originalFileInfo = null; // para metadatos
+
+      const FIRESTORE_FIELD_MAX = 1048487; // bytes
+      const TARGET_MAX_BLOB_BYTES = 780 * 1024; // ~780KB -> base64 ~ 1.04MB (margen)
+
+      // --- NUEVO util: convertir blob a DataURL ---
+      function blobToDataURL(blob) {
+        return new Promise((res) => {
+          const r = new FileReader();
+          r.onload = () => res(r.result);
+          r.readAsDataURL(blob);
+        });
+      }
+
+      // --- NUEVO: carga dinámica librería HEIC ---
+      async function loadHeicConverter() {
+        if (window.heic2any) return;
+        await new Promise((resolve, reject) => {
+          const s = document.createElement("script");
+          s.src =
+            "https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js";
+          s.onload = () => resolve();
+          s.onerror = () => reject(new Error("No se pudo cargar heic2any"));
+          document.head.appendChild(s);
+        });
+      }
+
+      async function ensureStandardImage(file) {
+        const isHeic = /\.heic$/i.test(file.name) || /heic$/i.test(file.type);
+        if (!isHeic) return { file, converted: false };
+        try {
+          await loadHeicConverter();
+          const convertedBlob = await window.heic2any({
+            blob: file,
+            toType: "image/jpeg",
+            quality: 0.95,
+          });
+          const newFile = new File(
+            [convertedBlob],
+            file.name.replace(/\.heic$/i, ".jpg"),
+            { type: "image/jpeg" }
+          );
+          return { file: newFile, converted: true };
+        } catch (e) {
+          console.warn(
+            "Fallo conversión HEIC, se intenta seguir con original",
+            e
+          );
+          return { file, converted: false, error: e.message };
+        }
+      }
+
+      // --- utilidades de compresión con límite por bytes (ajustada) ---
+      async function compressImage(
+        file,
+        {
+          maxWidth = 1200,
+          maxHeight = 1200,
+          qualityStart = 0.85,
+          minQuality = 0.35,
+          mimeType = "image/jpeg",
+          maxBytes = 850 * 1024,
+          maxPasses = 8,
+        } = {}
+      ) {
+        const bitmap = await fileToImageBitmap(file);
+        let { width, height } = bitmap;
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement("canvas");
+        let ctx = canvas.getContext("2d");
+        let pass = 0;
+        let q = qualityStart;
+        let blob;
+        do {
+          canvas.width = width;
+          canvas.height = height;
+          ctx.clearRect(0, 0, width, height);
+          ctx.drawImage(bitmap, 0, 0, width, height);
+          blob = await canvasToBlob(canvas, mimeType, q);
+          if (blob.size <= maxBytes || pass >= maxPasses) break;
+          // Reducir primero calidad hasta minQuality
+          if (q > minQuality) {
+            q = Math.max(minQuality, q - 0.1);
+          } else {
+            // luego reducir dimensiones
+            width = Math.round(width * 0.9);
+            height = Math.round(height * 0.9);
+          }
+          pass++;
+        } while (true);
+        return {
+          blob,
+          meta: { width, height, quality: q, size: blob.size, passes: pass },
+        };
+      }
+
+      function canvasToBlob(canvas, type, quality) {
+        return new Promise((resolve) =>
+          canvas.toBlob((b) => resolve(b), type, quality)
+        );
+      }
+
+      async function fileToImageBitmap(file) {
+        if ("createImageBitmap" in window) {
+          try {
+            return await createImageBitmap(file);
+          } catch (e) {
+            /* fallback */
+          }
+        }
+        return await new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = URL.createObjectURL(file);
+        });
+      }
+
+      // Reemplazar uploadCompressedImage: ya no se sube a Storage
+      async function ensureDataUrlUnderLimit(blob, { minQuality = 0.3 } = {}) {
+        // Intenta reducir más si al pasar a base64 supera límite
+        let dataUrl = await blobToDataURL(blob);
+        if (dataUrl.length <= FIRESTORE_FIELD_MAX) return { dataUrl, blob };
+        // Extra: iterar reduciendo con más compresión/dimensiones
+        let tempFile = new File([blob], "tmp.jpg", { type: "image/jpeg" });
+        let pass = 0;
+        let maxPasses = 6;
+        let qualityStart = Math.min(
+          0.75,
+          (compressedMeta?.quality || 0.85) - 0.1
+        );
+        let width = compressedMeta?.width;
+        let height = compressedMeta?.height;
+        while (pass < maxPasses) {
+          pass++;
+          const { blob: newBlob, meta } = await compressImage(tempFile, {
+            maxWidth: Math.round(width * 0.94),
+            maxHeight: Math.round(height * 0.94),
+            qualityStart,
+            minQuality,
+            maxBytes: TARGET_MAX_BLOB_BYTES,
+          });
+          width = meta.width;
+          height = meta.height;
+          qualityStart = Math.max(minQuality, meta.quality - 0.08);
+          dataUrl = await blobToDataURL(newBlob);
+          if (dataUrl.length <= FIRESTORE_FIELD_MAX)
+            return { dataUrl, blob: newBlob, meta };
+          tempFile = new File([newBlob], "tmp.jpg", { type: "image/jpeg" });
+        }
+        return {
+          dataUrl,
+          blob,
+          meta: compressedMeta,
+          truncated: dataUrl.length - FIRESTORE_FIELD_MAX,
+        };
+      }
+
+      productImageInput.addEventListener("change", async () => {
+        compressedImageBlob = null;
+        compressedMeta = null;
+        originalFileInfo = null;
+        const f = productImageInput.files[0];
+        if (!f) return;
+        let workFile = f;
+        const heicResult = await ensureStandardImage(workFile);
+        workFile = heicResult.file;
+        originalFileInfo = {
+          originalName: f.name,
+          originalSize: f.size,
+          convertedFromHeic: heicResult.converted,
+        };
+        try {
+          const { blob, meta } = await compressImage(workFile, {
+            maxWidth: 1400,
+            maxHeight: 1400,
+            qualityStart: 0.85,
+            maxBytes: TARGET_MAX_BLOB_BYTES,
+          });
+          compressedImageBlob = blob;
+          compressedMeta = meta;
+          imagePreview.src = blobToObjectURL(blob);
+          imagePreview.classList.remove("hidden");
+          console.log(
+            `Compresión local: ${(f.size / 1024).toFixed(0)}KB -> ${(
+              blob.size / 1024
+            ).toFixed(0)}KB, q=${meta.quality.toFixed(2)} ${meta.width}x${
+              meta.height
+            }`
+          );
+        } catch (err) {
+          console.warn("Fallo compresión/preview", err);
+          imagePreview.src = blobToObjectURL(workFile);
+          imagePreview.classList.remove("hidden");
         }
       });
 
@@ -382,44 +570,72 @@
           alert("Debes estar autenticado para añadir productos.");
           return;
         }
-
+        const imageFile = productImageInput.files[0];
+        if (!imageFile) {
+          alert("Selecciona una imagen");
+          return;
+        }
         submitBtn.disabled = true;
         submitBtnText.classList.add("hidden");
         submitLoader.classList.remove("hidden");
-
         const name = document.getElementById("product-name").value;
         const description = document.getElementById(
           "product-description"
         ).value;
         const price = document.getElementById("product-price").value;
-        const imageFile = productImageInput.files[0];
-
-        const reader = new FileReader();
-        reader.readAsDataURL(imageFile);
-        reader.onloadend = async () => {
-          const imageUrl = reader.result;
-          try {
-            await addDoc(productsCollection, {
-              name,
-              description,
-              price: parseFloat(price).toFixed(2),
-              imageUrl,
-              createdAt: new Date(),
-              ownerId: userId,
+        try {
+          if (!compressedImageBlob) {
+            let workFile = imageFile;
+            const heicResult = await ensureStandardImage(workFile);
+            workFile = heicResult.file;
+            const { blob, meta } = await compressImage(workFile, {
+              maxWidth: 1400,
+              maxHeight: 1400,
+              qualityStart: 0.85,
+              maxBytes: TARGET_MAX_BLOB_BYTES,
             });
-
-            addProductForm.reset();
-            imagePreview.classList.add("hidden");
-            showNotification("¡Tesoro añadido con éxito!");
-          } catch (error) {
-            console.error("Error al añadir el producto: ", error);
-            alert("Hubo un error al guardar el producto.");
-          } finally {
-            submitBtn.disabled = false;
-            submitBtnText.classList.remove("hidden");
-            submitLoader.classList.add("hidden");
+            compressedImageBlob = blob;
+            compressedMeta = {
+              ...meta,
+              convertedFromHeic: heicResult.converted,
+            };
           }
-        };
+          const { dataUrl, meta } = await ensureDataUrlUnderLimit(
+            compressedImageBlob
+          );
+          if (dataUrl.length > FIRESTORE_FIELD_MAX) {
+            alert(
+              "No se pudo reducir la imagen por debajo del límite de Firestore. Prueba con una imagen más pequeña."
+            );
+            throw new Error("DataURL sigue excediendo límite");
+          }
+          await addDoc(productsCollection, {
+            name,
+            description,
+            price: parseFloat(price).toFixed(2),
+            imageUrl: dataUrl,
+            createdAt: new Date(),
+            ownerId: userId,
+            meta: {
+              compressed: true,
+              ...compressedMeta,
+              adjusted: !!meta,
+              originalFileInfo,
+            },
+          });
+          addProductForm.reset();
+          imagePreview.classList.add("hidden");
+          compressedImageBlob = null;
+          compressedMeta = null;
+          originalFileInfo = null;
+          showNotification("¡Tesoro añadido con éxito!");
+        } catch (error) {
+          console.error("Error al añadir el producto: ", error);
+        } finally {
+          submitBtn.disabled = false;
+          submitBtnText.classList.remove("hidden");
+          submitLoader.classList.add("hidden");
+        }
       });
 
       // --- INTEGRACIÓN CON GEMINI ---
