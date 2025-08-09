@@ -135,7 +135,10 @@
                 alt="Previsualización de la imagen"
                 class="hidden w-auto mx-auto mt-4 rounded-lg shadow-sm max-h-60"
               />
-              <p id="image-info" class="hidden mt-2 text-xs text-gray-500 text-center"></p>
+              <p
+                id="image-info"
+                class="hidden mt-2 text-xs text-gray-500 text-center"
+              ></p>
             </div>
 
             <div>
@@ -216,7 +219,7 @@
     </div>
 
     <!-- Cargar configuración externa -->
-    <script src="config.js"></script>
+    <script src="config.temp.js"></script>
     <script src="version.js"></script>
     <script type="module">
       // Importaciones de Firebase
@@ -373,7 +376,7 @@
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result);
           reader.onerror = reject;
-            reader.readAsDataURL(blob);
+          reader.readAsDataURL(blob);
         });
       }
       function blobToObjectURL(blob) {
@@ -383,7 +386,11 @@
       function revokeObjectURL(url) {
         if (!url) return;
         const URL_ = window.URL || window.webkitURL;
-        try { URL_.revokeObjectURL(url); } catch (e) { /* ignore */ }
+        try {
+          URL_.revokeObjectURL(url);
+        } catch (e) {
+          /* ignore */
+        }
       }
 
       // Variables para conservar el blob comprimido
