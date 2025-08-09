@@ -227,7 +227,7 @@
     </div>
 
     <!-- Cargar configuración externa -->
-    <script src="config.js"></script>
+    <script src="config.temp.js"></script>
     <script src="version.js"></script>
     <script type="module">
       // Importaciones de Firebase
@@ -408,15 +408,15 @@
       }
       async function blobToBase64Raw(blob) {
         const dataUrl = await blobToDataURL(blob);
-        return dataUrl.split(',')[1]; // quitar encabezado
+        return dataUrl.split(",")[1]; // quitar encabezado
       }
       async function generateDescriptionFromImage(blob) {
         try {
           if (!blob) return;
-            // No sobrescribir si ya escribió algo el usuario
+          // No sobrescribir si ya escribió algo el usuario
           if (productDescriptionTextarea.value.trim().length > 5) return;
           if (!window.CONFIG?.gemini?.apiKey) return;
-          geminiLoader.classList.remove('hidden');
+          geminiLoader.classList.remove("hidden");
           geminiHelperBtn.disabled = true;
           const base64 = await blobToBase64Raw(blob);
           const apiKey = window.CONFIG.gemini.apiKey;
@@ -425,27 +425,32 @@
           const payload = {
             contents: [
               {
-                role: 'user',
+                role: "user",
                 parts: [
-                  { inlineData: { data: base64, mimeType: blob.type || 'image/jpeg' } },
-                  { text: promptText }
-                ]
-              }
-            ]
+                  {
+                    inlineData: {
+                      data: base64,
+                      mimeType: blob.type || "image/jpeg",
+                    },
+                  },
+                  { text: promptText },
+                ],
+              },
+            ],
           };
           const resp = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
           });
-          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          if (!resp.ok) throw new Error("HTTP " + resp.status);
           const json = await resp.json();
           const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
           if (text) productDescriptionTextarea.value = text.trim();
         } catch (e) {
-          console.warn('Auto descripción fallida', e);
+          console.warn("Auto descripción fallida", e);
         } finally {
-          geminiLoader.classList.add('hidden');
+          geminiLoader.classList.add("hidden");
           geminiHelperBtn.disabled = false;
         }
       }
@@ -656,7 +661,11 @@
             const compKB = (blob.size / 1024).toFixed(0);
             const pct = ((blob.size / f.size) * 100).toFixed(1);
             const within = base64.length <= FIRESTORE_FIELD_MAX;
-            infoEl.textContent = `Original: ${origKB}KB | Comprimido: ${compKB}KB (${pct}%) | ${meta.width}x${meta.height} | Base64: ${encodedKB}KB ${within ? "OK" : "⚠ supera límite (se ajustará al guardar)"}`;
+            infoEl.textContent = `Original: ${origKB}KB | Comprimido: ${compKB}KB (${pct}%) | ${
+              meta.width
+            }x${meta.height} | Base64: ${encodedKB}KB ${
+              within ? "OK" : "⚠ supera límite (se ajustará al guardar)"
+            }`;
             infoEl.classList.remove("hidden");
           }
           // auto generar descripción si procede
