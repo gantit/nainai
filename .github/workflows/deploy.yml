@@ -26,7 +26,7 @@ jobs:
 
       - name: Create config file with real API keys
         run: |
-          cat > config.js << 'EOF'
+          cat > config.temp.js << 'EOF'
           // Configuración para producción con variables de entorno
           const CONFIG = {
             firebase: {
