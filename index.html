@@ -227,7 +227,7 @@
     </div>
 
     <!-- Cargar configuración externa -->
-    <script src="config.temp.js"></script>
+    <script src="config.js"></script>
     <script src="version.js"></script>
     <script type="module">
       // Importaciones de Firebase
@@ -383,6 +383,7 @@
       );
       const geminiHelperBtn = document.getElementById("gemini-helper-btn");
       const geminiLoader = document.getElementById("gemini-loader");
+      const GEMINI_PROXY_URL = "https://nai-gemini-proxy.joca.workers.dev";
 
       // --- UTILIDADES FALTANTES: blob/dataURL ---
       function blobToDataURL(blob) {
@@ -413,40 +414,23 @@
       async function generateDescriptionFromImage(blob) {
         try {
           if (!blob) return;
-          // No sobrescribir si ya escribió algo el usuario
           if (productDescriptionTextarea.value.trim().length > 5) return;
-          if (!window.CONFIG?.gemini?.apiKey) return;
           geminiLoader.classList.remove("hidden");
           geminiHelperBtn.disabled = true;
           const base64 = await blobToBase64Raw(blob);
-          const apiKey = window.CONFIG.gemini.apiKey;
-          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
           const promptText = `Analiza la foto de un collar artesanal (marca 'Nai Nai Tesoros del Mar') y escribe una descripción de marketing breve y evocadora en español.\nReglas:\n- 2 frases (máx 230 caracteres).\n- Tono poético, evocador del mar y sensorial.\n- Resalta belleza, materiales naturales y conexión con el océano.\n- Sin detalles técnicos ni proceso.\n- Sin comillas, listas u opciones.\nDevuelve solo la descripción.`;
-          const payload = {
-            contents: [
-              {
-                role: "user",
-                parts: [
-                  {
-                    inlineData: {
-                      data: base64,
-                      mimeType: blob.type || "image/jpeg",
-                    },
-                  },
-                  { text: promptText },
-                ],
-              },
-            ],
-          };
-          const resp = await fetch(apiUrl, {
+          const resp = await fetch(GEMINI_PROXY_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
+            body: JSON.stringify({
+              prompt: promptText,
+              imageBase64: base64,
+              mimeType: blob.type || "image/jpeg",
+            }),
           });
-          if (!resp.ok) throw new Error("HTTP " + resp.status);
+          if (!resp.ok) throw new Error("Proxy error " + resp.status);
           const json = await resp.json();
-          const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (text) productDescriptionTextarea.value = text.trim();
+          if (json.text) productDescriptionTextarea.value = json.text.trim();
         } catch (e) {
           console.warn("Auto descripción fallida", e);
         } finally {
@@ -805,41 +789,30 @@
       });
 
       async function generateTextWithGemini(prompt) {
-        const apiKey = window.CONFIG.gemini.apiKey; // Usar la clave del archivo de configuración
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-        const payload = {
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-        };
-
-        let response;
-        let result;
+        const payload = { prompt };
+        let resultText = null;
         let retries = 3;
         let delay = 1000;
-
         for (let i = 0; i < retries; i++) {
           try {
-            response = await fetch(apiUrl, {
+            const resp = await fetch(GEMINI_PROXY_URL, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payload),
             });
-            if (response.ok) {
-              result = await response.json();
+            if (resp.ok) {
+              const json = await resp.json();
+              resultText = json.text;
               break;
             }
-          } catch (error) {
-            console.warn(
-              `Intento ${i + 1} fallido. Reintentando en ${delay}ms...`
-            );
+          } catch (e) {
+            console.warn(`Intento ${i + 1} fallo proxy`, e);
           }
-          await new Promise((resolve) => setTimeout(resolve, delay));
+          await new Promise((r) => setTimeout(r, delay));
           delay *= 2;
         }
-
-        if (!result || !result.candidates || !result.candidates.length === 0) {
-          throw new Error("Respuesta inválida de la API de Gemini.");
-        }
-        return result.candidates[0].content.parts[0].text;
+        if (!resultText) throw new Error("Proxy sin respuesta válida");
+        return resultText;
       }
 
       // --- UTILIDADES ---

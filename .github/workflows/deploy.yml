@@ -26,8 +26,10 @@ jobs:
 
       - name: Create config file with real API keys
         run: |
-          cat > config.temp.js << 'EOF'
-          // Configuración para producción con variables de entorno
+          # Crear un archivo de configuración temporal con las variables de entorno meterlas dentro de window.CONFIG y luego borrarlo al final
+          echo "Creating config.js with environment variables..."
+          mkdir -p .github/workflows
+          cat > .github/workflows/config.js << 'EOF'
           const CONFIG = {
             firebase: {
               apiKey: "${{ secrets.FIREBASE_API_KEY }}",
@@ -43,6 +45,12 @@ jobs:
             }
           };
           window.CONFIG = CONFIG;
+          window.VERSION = "${{ github.sha }}";
+          window.IS_PRODUCTION = true;
+          # Borrar el archivo de configuración al final del flujo de trabajo
+          echo "Config file created successfully."
+          rm -f .github/workflows/config.js
+          echo "Config file deleted successfully."
           EOF
 
       - name: Setup Pages
