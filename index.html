@@ -135,6 +135,7 @@
                 alt="Previsualización de la imagen"
                 class="hidden w-auto mx-auto mt-4 rounded-lg shadow-sm max-h-60"
               />
+              <p id="image-info" class="hidden mt-2 text-xs text-gray-500 text-center"></p>
             </div>
 
             <div>
@@ -361,10 +362,29 @@
       // --- LÓGICA DEL PANEL DE ADMINISTRACIÓN ---
       const addProductForm = document.getElementById("add-product-form");
       const productImageInput = document.getElementById("product-image");
-      const imagePreview = document.getElementById("image-preview");
       const submitBtn = document.getElementById("submit-product-btn");
       const submitBtnText = document.getElementById("submit-btn-text");
       const submitLoader = document.getElementById("submit-loader");
+      const imagePreview = document.getElementById("image-preview");
+
+      // --- UTILIDADES FALTANTES: blob/dataURL ---
+      function blobToDataURL(blob) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+      }
+      function blobToObjectURL(blob) {
+        const URL_ = window.URL || window.webkitURL;
+        return URL_.createObjectURL(blob);
+      }
+      function revokeObjectURL(url) {
+        if (!url) return;
+        const URL_ = window.URL || window.webkitURL;
+        try { URL_.revokeObjectURL(url); } catch (e) { /* ignore */ }
+      }
 
       // Variables para conservar el blob comprimido
       let compressedImageBlob = null;
@@ -373,15 +393,6 @@
 
       const FIRESTORE_FIELD_MAX = 1048487; // bytes
       const TARGET_MAX_BLOB_BYTES = 780 * 1024; // ~780KB -> base64 ~ 1.04MB (margen)
-
-      // --- NUEVO util: convertir blob a DataURL ---
-      function blobToDataURL(blob) {
-        return new Promise((res) => {
-          const r = new FileReader();
-          r.onload = () => res(r.result);
-          r.readAsDataURL(blob);
-        });
-      }
 
       // --- NUEVO: carga dinámica librería HEIC ---
       async function loadHeicConverter() {
@@ -532,6 +543,11 @@
       }
 
       productImageInput.addEventListener("change", async () => {
+        // limpiar URL previa
+        if (imagePreview?.dataset?.objectUrl) {
+          revokeObjectURL(imagePreview.dataset.objectUrl);
+          delete imagePreview.dataset.objectUrl;
+        }
         compressedImageBlob = null;
         compressedMeta = null;
         originalFileInfo = null;
@@ -545,6 +561,11 @@
           originalSize: f.size,
           convertedFromHeic: heicResult.converted,
         };
+        const infoEl = document.getElementById("image-info");
+        if (infoEl) {
+          infoEl.classList.add("hidden");
+          infoEl.textContent = "";
+        }
         try {
           const { blob, meta } = await compressImage(workFile, {
             maxWidth: 1400,
@@ -554,8 +575,26 @@
           });
           compressedImageBlob = blob;
           compressedMeta = meta;
-          imagePreview.src = blobToObjectURL(blob);
+          const objUrl = blobToObjectURL(blob);
+          imagePreview.dataset.objectUrl = objUrl;
+          imagePreview.src = objUrl;
+          imagePreview.alt = `Previsualización (${meta.width}x${meta.height})`;
           imagePreview.classList.remove("hidden");
+          // Mostrar info detallada
+          if (infoEl) {
+            const base64 = await blobToDataURL(blob);
+            const encodedKB = (base64.length / 1024).toFixed(0);
+            const origKB = (f.size / 1024).toFixed(0);
+            const compKB = (blob.size / 1024).toFixed(0);
+            const pct = ((blob.size / f.size) * 100).toFixed(1);
+            const within = base64.length <= FIRESTORE_FIELD_MAX;
+            infoEl.textContent = `Original: ${origKB}KB | Comprimido: ${compKB}KB (${pct}%) | ${
+              meta.width
+            }x${meta.height} | Base64: ${encodedKB}KB ${
+              within ? "OK" : "⚠ supera límite (se ajustará al guardar)"
+            }`;
+            infoEl.classList.remove("hidden");
+          }
           console.log(
             `Compresión local: ${(f.size / 1024).toFixed(0)}KB -> ${(
               blob.size / 1024
@@ -565,8 +604,16 @@
           );
         } catch (err) {
           console.warn("Fallo compresión/preview", err);
-          imagePreview.src = blobToObjectURL(workFile);
+          const objUrlFallback = blobToObjectURL(workFile);
+          imagePreview.dataset.objectUrl = objUrlFallback;
+          imagePreview.src = objUrlFallback;
+          imagePreview.alt = "Previsualización (sin comprimir)";
           imagePreview.classList.remove("hidden");
+          if (infoEl) {
+            const origKB = (f.size / 1024).toFixed(0);
+            infoEl.textContent = `Sin compresión. Tamaño original: ${origKB}KB`;
+            infoEl.classList.remove("hidden");
+          }
         }
       });
 
@@ -631,6 +678,10 @@
           });
           addProductForm.reset();
           imagePreview.classList.add("hidden");
+          if (imagePreview?.dataset?.objectUrl) {
+            revokeObjectURL(imagePreview.dataset.objectUrl);
+            delete imagePreview.dataset.objectUrl;
+          }
           compressedImageBlob = null;
           compressedMeta = null;
           originalFileInfo = null;
