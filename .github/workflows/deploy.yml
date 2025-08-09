@@ -23,11 +23,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Necesario para contar commits y obtener hash
 
       - name: Create config file with real API keys
         run: |
+          cat > config.js << 'EOF'
+          // Configuración para producción con variables de entorno
           const CONFIG = {
             firebase: {
               apiKey: "${{ secrets.FIREBASE_API_KEY }}",
@@ -44,22 +44,6 @@ jobs:
           };
           window.CONFIG = CONFIG;
           EOF
-
-      - name: Generate version.js
-        run: |
-          DATE_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          STAMP=$(date -u +%Y.%m.%d-%H%M%S)
-          HASH=$(git rev-parse --short HEAD)
-          COUNT=$(git rev-list --count HEAD)
-          VERSION="${STAMP}-c${COUNT}-${HASH}"
-          mkdir -p docs/nai
-          cat > docs/nai/version.js <<EOF
-          // Archivo generado automáticamente - NO editar
-          // Fecha UTC: $DATE_UTC
-          // Versión: $VERSION
-          window.__APP_VERSION__ = '$VERSION';
-          EOF
-          echo "Versión generada: $VERSION"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
