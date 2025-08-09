@@ -135,6 +135,14 @@
                 alt="Previsualización de la imagen"
                 class="hidden w-auto mx-auto mt-4 rounded-lg shadow-sm max-h-60"
               />
+              <div id="image-loader" class="hidden flex gap-3">
+                <div
+                  class="loader !w-5 !h-5 !border-2 !border-t-purple-500"
+                ></div>
+                <p class="ml-2 text-sm text-gray-500">
+                  Creando la imagen perfecta...
+                </p>
+              </div>
               <p
                 id="image-info"
                 class="hidden mt-2 text-xs text-gray-500 text-center"
@@ -152,7 +160,7 @@
                   id="product-description"
                   rows="4"
                   required
-                  class="w-full px-4 py-3 transition border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500"
+                  class="w-full px-4 mb-10 py-3 transition border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500"
                   placeholder="Describe brevemente el collar. ¿Qué conchas usaste? ¿En qué te inspiraste?"
                 ></textarea>
                 <button
@@ -219,7 +227,7 @@
     </div>
 
     <!-- Cargar configuración externa -->
-    <script src="config.temp.js"></script>
+    <script src="config.js"></script>
     <script src="version.js"></script>
     <script type="module">
       // Importaciones de Firebase
@@ -369,6 +377,12 @@
       const submitBtnText = document.getElementById("submit-btn-text");
       const submitLoader = document.getElementById("submit-loader");
       const imagePreview = document.getElementById("image-preview");
+      const imageLoader = document.getElementById("image-loader");
+      const productDescriptionTextarea = document.getElementById(
+        "product-description"
+      );
+      const geminiHelperBtn = document.getElementById("gemini-helper-btn");
+      const geminiLoader = document.getElementById("gemini-loader");
 
       // --- UTILIDADES FALTANTES: blob/dataURL ---
       function blobToDataURL(blob) {
@@ -390,6 +404,49 @@
           URL_.revokeObjectURL(url);
         } catch (e) {
           /* ignore */
+        }
+      }
+      async function blobToBase64Raw(blob) {
+        const dataUrl = await blobToDataURL(blob);
+        return dataUrl.split(',')[1]; // quitar encabezado
+      }
+      async function generateDescriptionFromImage(blob) {
+        try {
+          if (!blob) return;
+            // No sobrescribir si ya escribió algo el usuario
+          if (productDescriptionTextarea.value.trim().length > 5) return;
+          if (!window.CONFIG?.gemini?.apiKey) return;
+          geminiLoader.classList.remove('hidden');
+          geminiHelperBtn.disabled = true;
+          const base64 = await blobToBase64Raw(blob);
+          const apiKey = window.CONFIG.gemini.apiKey;
+          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+          const promptText = `Analiza la foto de un collar artesanal (marca 'Nai Nai Tesoros del Mar') y escribe una descripción de marketing breve y evocadora en español.\nReglas:\n- 2 frases (máx 230 caracteres).\n- Tono poético, evocador del mar y sensorial.\n- Resalta belleza, materiales naturales y conexión con el océano.\n- Sin detalles técnicos ni proceso.\n- Sin comillas, listas u opciones.\nDevuelve solo la descripción.`;
+          const payload = {
+            contents: [
+              {
+                role: 'user',
+                parts: [
+                  { inlineData: { data: base64, mimeType: blob.type || 'image/jpeg' } },
+                  { text: promptText }
+                ]
+              }
+            ]
+          };
+          const resp = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          const json = await resp.json();
+          const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) productDescriptionTextarea.value = text.trim();
+        } catch (e) {
+          console.warn('Auto descripción fallida', e);
+        } finally {
+          geminiLoader.classList.add('hidden');
+          geminiHelperBtn.disabled = false;
         }
       }
 
@@ -550,6 +607,8 @@
       }
 
       productImageInput.addEventListener("change", async () => {
+        if (imageLoader) imageLoader.classList.remove("hidden");
+        if (imagePreview) imagePreview.classList.add("hidden");
         // limpiar URL previa
         if (imagePreview?.dataset?.objectUrl) {
           revokeObjectURL(imagePreview.dataset.objectUrl);
@@ -559,7 +618,10 @@
         compressedMeta = null;
         originalFileInfo = null;
         const f = productImageInput.files[0];
-        if (!f) return;
+        if (!f) {
+          if (imageLoader) imageLoader.classList.add("hidden");
+          return;
+        }
         let workFile = f;
         const heicResult = await ensureStandardImage(workFile);
         workFile = heicResult.file;
@@ -587,7 +649,6 @@
           imagePreview.src = objUrl;
           imagePreview.alt = `Previsualización (${meta.width}x${meta.height})`;
           imagePreview.classList.remove("hidden");
-          // Mostrar info detallada
           if (infoEl) {
             const base64 = await blobToDataURL(blob);
             const encodedKB = (base64.length / 1024).toFixed(0);
@@ -595,20 +656,11 @@
             const compKB = (blob.size / 1024).toFixed(0);
             const pct = ((blob.size / f.size) * 100).toFixed(1);
             const within = base64.length <= FIRESTORE_FIELD_MAX;
-            infoEl.textContent = `Original: ${origKB}KB | Comprimido: ${compKB}KB (${pct}%) | ${
-              meta.width
-            }x${meta.height} | Base64: ${encodedKB}KB ${
-              within ? "OK" : "⚠ supera límite (se ajustará al guardar)"
-            }`;
+            infoEl.textContent = `Original: ${origKB}KB | Comprimido: ${compKB}KB (${pct}%) | ${meta.width}x${meta.height} | Base64: ${encodedKB}KB ${within ? "OK" : "⚠ supera límite (se ajustará al guardar)"}`;
             infoEl.classList.remove("hidden");
           }
-          console.log(
-            `Compresión local: ${(f.size / 1024).toFixed(0)}KB -> ${(
-              blob.size / 1024
-            ).toFixed(0)}KB, q=${meta.quality.toFixed(2)} ${meta.width}x${
-              meta.height
-            }`
-          );
+          // auto generar descripción si procede
+          generateDescriptionFromImage(blob);
         } catch (err) {
           console.warn("Fallo compresión/preview", err);
           const objUrlFallback = blobToObjectURL(workFile);
@@ -621,6 +673,8 @@
             infoEl.textContent = `Sin compresión. Tamaño original: ${origKB}KB`;
             infoEl.classList.remove("hidden");
           }
+        } finally {
+          if (imageLoader) imageLoader.classList.add("hidden");
         }
       });
 
@@ -703,11 +757,9 @@
       });
 
       // --- INTEGRACIÓN CON GEMINI ---
-      const geminiHelperBtn = document.getElementById("gemini-helper-btn");
-      const productDescriptionTextarea = document.getElementById(
-        "product-description"
-      );
-      const geminiLoader = document.getElementById("gemini-loader");
+      // Eliminadas las redeclaraciones de geminiHelperBtn y geminiLoader (ya arriba)
+      // const geminiHelperBtn = document.getElementById("gemini-helper-btn");
+      // const geminiLoader = document.getElementById("gemini-loader");
 
       geminiHelperBtn.addEventListener("click", async () => {
         const currentDescription = productDescriptionTextarea.value;
@@ -721,7 +773,15 @@
         geminiLoader.classList.remove("hidden");
         geminiHelperBtn.disabled = true;
 
-        const prompt = `Re-escribe la siguiente descripción para un collar de conchas hecho a mano para una marca llamada 'Nai Nai Tesoros del Mar'. Hazla corta (2-3 frases), atractiva y enfocada en vender, usando un tono poético y evocador del mar. Descripción original: "${currentDescription}"`;
+        const prompt = `Re-escribe la siguiente descripción para un collar de conchas hecho a mano para una marca llamada 'Nai Nai Tesoros del Mar'. Hazla corta (2 frases), atractiva y enfocada en vender, usando un tono poético y evocador del mar. Descripción original: "${currentDescription}"
+        Normas:
+        - Usa un tono poético y evocador del mar.
+        - Mantén la descripción breve (2-3 frases).
+        - Enfócate en vender el collar, resaltando su belleza y conexión con la naturaleza.
+        - Evita tecnicismos o descripciones largas.
+        - Usa un lenguaje atractivo y emocional.
+        - No incluyas detalles técnicos o de fabricación.
+        - No des opciones o alternativas has una descripción única y convincente se directo sin comillas.`;
 
         try {
           const text = await generateTextWithGemini(prompt);
