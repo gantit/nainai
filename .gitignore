@@ -1,7 +1,3 @@
-# Archivos de configuración con keys privadas
-config.js
-config.public.js
-
 # Archivos de sistema
 .DS_Store
 Thumbs.db
