@@ -83,6 +83,13 @@
           >
             Administrar
           </button>
+          <!-- Nuevo botón para ver pedidos (solo en modo admin) -->
+          <button
+            id="show-orders-btn"
+            class="px-5 py-2.5 text-sm font-semibold bg-purple-600 text-white rounded-full shadow-md hover:bg-purple-700 transition-all hidden"
+          >
+            Pedidos
+          </button>
         </nav>
       </header>
 
@@ -221,6 +228,24 @@
         </div>
       </section>
 
+      <!-- SECCIÓN PEDIDOS (ADMIN) -->
+      <section id="orders-page" class="hidden">
+        <div class="max-w-4xl mx-auto">
+          <h2 class="mb-8 text-3xl font-bold text-center text-purple-800">
+            Gestión de Pedidos
+          </h2>
+          
+          <div id="orders-loading" class="py-10 text-center">
+            <div class="inline-block loader"></div>
+            <p class="mt-4 text-gray-600">Cargando pedidos...</p>
+          </div>
+          
+          <div id="orders-container" class="space-y-4">
+            <!-- Los pedidos se cargarán aquí -->
+          </div>
+        </div>
+      </section>
+
       <!-- Mensaje de notificación -->
       <div
         id="notification"
@@ -233,6 +258,70 @@
       <footer class="mt-12 text-center text-xs text-gray-500">
         Versión <span id="app-version">cargando...</span>
       </footer>
+
+      <!-- Modal de pedido -->
+      <div id="order-modal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
+          <h3 class="text-xl font-bold text-cyan-800 mb-4">Hacer Pedido</h3>
+          <p class="text-gray-600 mb-4">Producto: <span id="order-product-name" class="font-semibold"></span></p>
+          
+          <form id="order-form" class="space-y-4">
+            <div>
+              <label for="customer-name" class="block text-sm font-medium text-gray-700 mb-1">
+                Tu nombre
+              </label>
+              <input 
+                type="text" 
+                id="customer-name" 
+                required 
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500"
+                placeholder="Ej: María García"
+              />
+            </div>
+            
+            <div>
+              <label for="customer-address" class="block text-sm font-medium text-gray-700 mb-1">
+                Dirección de entrega
+              </label>
+              <textarea 
+                id="customer-address" 
+                required 
+                rows="3"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500"
+                placeholder="Ej: Calle Mayor 15, cerca de la farmacia"
+              ></textarea>
+            </div>
+            
+            <div>
+              <label for="customer-phone" class="block text-sm font-medium text-gray-700 mb-1">
+                Teléfono (opcional)
+              </label>
+              <input 
+                type="tel" 
+                id="customer-phone" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500"
+                placeholder="Ej: 666 123 456"
+              />
+            </div>
+            
+            <div class="flex gap-3 pt-4">
+              <button 
+                type="button" 
+                onclick="closeOrderModal()" 
+                class="flex-1 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button 
+                type="submit" 
+                class="flex-1 px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700"
+              >
+                Confirmar Pedido
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
 
     <!-- Cargar configuración externa -->
@@ -307,37 +396,62 @@
       // --- NAVEGACIÓN Y SEGURIDAD SIMPLE ---
       const shopPage = document.getElementById("shop-page");
       const adminPage = document.getElementById("admin-page");
+      const ordersPage = document.getElementById("orders-page");
       const showShopBtn = document.getElementById("show-shop-btn");
       const showAdminBtn = document.getElementById("show-admin-btn");
+      const showOrdersBtn = document.getElementById("show-orders-btn");
 
       // NUEVA LÓGICA: Mostrar el botón de admin solo si la URL contiene el parámetro correcto
       const urlParams = new URLSearchParams(window.location.search);
       const adminMode = urlParams.get("admin") === "nai"; // nuevo flag
       if (adminMode) {
         showAdminBtn.classList.remove("hidden");
+        document.getElementById("show-orders-btn").classList.remove("hidden");
       }
 
       showShopBtn.addEventListener("click", () => {
         shopPage.classList.remove("hidden");
         adminPage.classList.add("hidden");
+        ordersPage.classList.add("hidden");
         showShopBtn.className =
           "px-5 py-2.5 text-sm font-semibold bg-cyan-600 text-white rounded-full shadow-md hover:bg-cyan-700 transition-all";
         showAdminBtn.className =
           "px-5 py-2.5 text-sm font-semibold bg-white text-gray-700 rounded-full shadow-md hover:bg-gray-100 transition-all";
+        if (showOrdersBtn) showOrdersBtn.className =
+          "px-5 py-2.5 text-sm font-semibold bg-purple-600 text-white rounded-full shadow-md hover:bg-purple-700 transition-all";
         // El botón de admin puede volver a ocultarse si ya estaba oculto
         if (urlParams.get("admin") !== "nai") {
           showAdminBtn.classList.add("hidden");
+          if (showOrdersBtn) showOrdersBtn.classList.add("hidden");
         }
       });
 
       showAdminBtn.addEventListener("click", () => {
         shopPage.classList.add("hidden");
         adminPage.classList.remove("hidden");
+        ordersPage.classList.add("hidden");
         showAdminBtn.className =
           "px-5 py-2.5 text-sm font-semibold bg-cyan-600 text-white rounded-full shadow-md hover:bg-cyan-700 transition-all";
         showShopBtn.className =
           "px-5 py-2.5 text-sm font-semibold bg-white text-gray-700 rounded-full shadow-md hover:bg-gray-100 transition-all";
+        if (showOrdersBtn) showOrdersBtn.className =
+          "px-5 py-2.5 text-sm font-semibold bg-purple-600 text-white rounded-full shadow-md hover:bg-purple-700 transition-all";
       });
+
+      if (showOrdersBtn) {
+        showOrdersBtn.addEventListener("click", () => {
+          shopPage.classList.add("hidden");
+          adminPage.classList.add("hidden");
+          ordersPage.classList.remove("hidden");
+          showOrdersBtn.className =
+            "px-5 py-2.5 text-sm font-semibold bg-purple-800 text-white rounded-full shadow-md hover:bg-purple-900 transition-all";
+          showShopBtn.className =
+            "px-5 py-2.5 text-sm font-semibold bg-white text-gray-700 rounded-full shadow-md hover:bg-gray-100 transition-all";
+          showAdminBtn.className =
+            "px-5 py-2.5 text-sm font-semibold bg-white text-gray-700 rounded-full shadow-md hover:bg-gray-100 transition-all";
+          fetchOrders();
+        });
+      }
 
       // --- LÓGICA DE LA TIENDA ---
       const productGrid = document.getElementById("product-grid");
@@ -374,7 +488,12 @@
                     <div class="p-5">
                       <h3 class="text-lg font-bold truncate text-cyan-900">${product.name}</h3>
                       <p class="h-16 mt-2 overflow-hidden text-sm text-gray-600">${product.description}</p>
-                      <p class="mt-4 text-2xl font-bold text-right text-cyan-700">${product.price} €</p>
+                      <div class="flex items-center justify-between mt-4">
+                        <p class="text-2xl font-bold text-cyan-700">${product.price} €</p>
+                        <button onclick="orderProduct('${d.id}', '${product.name}')" class="px-4 py-2 text-sm font-semibold text-white bg-green-600 rounded-full hover:bg-green-700 transition-all shadow">
+                          Pedir
+                        </button>
+                      </div>
                     </div>
                   </div>`;
                 productGrid.innerHTML += productCard;
@@ -893,6 +1012,136 @@
         }, 3000);
       }
 
+      // --- SISTEMA DE PEDIDOS ---
+      let currentOrderProductId = null;
+      
+      window.orderProduct = function(productId, productName) {
+        currentOrderProductId = productId;
+        document.getElementById('order-product-name').textContent = productName;
+        document.getElementById('order-modal').classList.remove('hidden');
+      };
+      
+      window.closeOrderModal = function() {
+        document.getElementById('order-modal').classList.add('hidden');
+        document.getElementById('order-form').reset();
+        currentOrderProductId = null;
+      };
+      
+      document.getElementById('order-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const customerName = document.getElementById('customer-name').value;
+        const customerAddress = document.getElementById('customer-address').value;
+        const customerPhone = document.getElementById('customer-phone').value;
+        const product = productsCache[currentOrderProductId];
+        
+        if (!product) {
+          alert('Error: producto no encontrado');
+          return;
+        }
+        
+        try {
+          // Guardar pedido en Firestore
+          const ordersCollection = collection(db, "artifacts", appId, "public", "data", "orders");
+          await addDoc(ordersCollection, {
+            productId: currentOrderProductId,
+            productName: product.name,
+            productPrice: product.price,
+            customerName,
+            customerAddress,
+            customerPhone: customerPhone || null,
+            status: 'pendiente',
+            createdAt: new Date(),
+            orderDate: new Date().toLocaleDateString('es-ES')
+          });
+          
+          showNotification('¡Pedido enviado! Te contactaremos pronto.');
+          closeOrderModal();
+          
+        } catch (error) {
+          console.error('Error al enviar pedido:', error);
+          alert('Error al enviar el pedido. Inténtalo de nuevo.');
+        }
+      });
+
+      // --- GESTIÓN DE PEDIDOS (ADMIN) ---
+      function fetchOrders() {
+        if (!adminMode) return;
+        
+        const ordersCollection = collection(db, "artifacts", appId, "public", "data", "orders");
+        const q = query(ordersCollection, orderBy("createdAt", "desc"));
+        
+        onSnapshot(q, (snapshot) => {
+          const ordersLoading = document.getElementById('orders-loading');
+          const ordersContainer = document.getElementById('orders-container');
+          
+          if (ordersLoading) ordersLoading.classList.add('hidden');
+          if (!ordersContainer) return;
+          
+          ordersContainer.innerHTML = '';
+          
+          if (snapshot.empty) {
+            ordersContainer.innerHTML = '<p class="text-center text-gray-500 py-8">No hay pedidos todavía.</p>';
+            return;
+          }
+          
+          snapshot.docs.forEach((doc) => {
+            const order = doc.data();
+            const orderCard = `
+              <div class="bg-white rounded-lg shadow-md p-6 border-l-4 ${order.status === 'pendiente' ? 'border-yellow-400' : order.status === 'entregado' ? 'border-green-400' : 'border-gray-400'}">
+                <div class="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 class="font-bold text-lg text-gray-800">${order.productName}</h3>
+                    <p class="text-gray-600">Cliente: ${order.customerName}</p>
+                    <p class="text-gray-600">Precio: ${order.productPrice} €</p>
+                  </div>
+                  <div class="text-right">
+                    <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full ${
+                      order.status === 'pendiente' ? 'bg-yellow-100 text-yellow-800' : 
+                      order.status === 'entregado' ? 'bg-green-100 text-green-800' : 
+                      'bg-gray-100 text-gray-800'
+                    }">
+                      ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                    </span>
+                    <p class="text-xs text-gray-500 mt-1">${order.orderDate}</p>
+                  </div>
+                </div>
+                
+                <div class="mb-4">
+                  <p class="text-sm font-medium text-gray-700">Dirección:</p>
+                  <p class="text-sm text-gray-600">${order.customerAddress}</p>
+                  ${order.customerPhone ? `<p class="text-sm text-gray-600">Tel: ${order.customerPhone}</p>` : ''}
+                </div>
+                
+                ${order.status === 'pendiente' ? `
+                  <button 
+                    onclick="markAsDelivered('${doc.id}')" 
+                    class="px-4 py-2 text-sm font-semibold text-white bg-green-600 rounded hover:bg-green-700"
+                  >
+                    Marcar como Entregado
+                  </button>
+                ` : ''}
+              </div>
+            `;
+            ordersContainer.innerHTML += orderCard;
+          });
+        });
+      }
+      
+      window.markAsDelivered = async function(orderId) {
+        try {
+          const orderRef = doc(db, "artifacts", appId, "public", "data", "orders", orderId);
+          await updateDoc(orderRef, {
+            status: 'entregado',
+            deliveredAt: new Date()
+          });
+          showNotification('Pedido marcado como entregado');
+        } catch (error) {
+          console.error('Error al actualizar pedido:', error);
+          alert('Error al actualizar el pedido');
+        }
+      };
+
       // Mostrar versión en footer
       (function () {
         const el = document.getElementById("app-version");
@@ -946,33 +1195,35 @@
         editingProductId = id;
         existingImageDataUrl = p.imageUrl;
         showAdminBtn.click();
-        document.getElementById('product-name').value = p.name || '';
-        document.getElementById('product-description').value = p.description || '';
-        document.getElementById('product-price').value = parseFloat(p.price) || '';
+        document.getElementById("product-name").value = p.name || "";
+        document.getElementById("product-description").value =
+          p.description || "";
+        document.getElementById("product-price").value =
+          parseFloat(p.price) || "";
         // desactivar obligatoriedad de imagen al editar
         if (productImageInput) productImageInput.required = false;
         if (existingImageDataUrl) {
           imagePreview.src = existingImageDataUrl;
-          imagePreview.alt = 'Imagen actual';
-          imagePreview.classList.remove('hidden');
+          imagePreview.alt = "Imagen actual";
+          imagePreview.classList.remove("hidden");
           compressedImageBlob = null;
           compressedMeta = null;
           originalFileInfo = null;
         }
-        submitBtnText.textContent = 'Guardar Cambios';
-        submitBtn.classList.remove('bg-cyan-600','hover:bg-cyan-700');
-        submitBtn.classList.add('bg-amber-600','hover:bg-amber-700');
-        if (cancelEditBtn) cancelEditBtn.classList.remove('hidden');
+        submitBtnText.textContent = "Guardar Cambios";
+        submitBtn.classList.remove("bg-cyan-600", "hover:bg-cyan-700");
+        submitBtn.classList.add("bg-amber-600", "hover:bg-amber-700");
+        if (cancelEditBtn) cancelEditBtn.classList.remove("hidden");
       }
       function resetEditState() {
         editingProductId = null;
         existingImageDataUrl = null;
         addProductForm.reset();
-        imagePreview.classList.add('hidden');
-        submitBtnText.textContent = 'Añadir Producto a la Tienda';
-        submitBtn.classList.remove('bg-amber-600','hover:bg-amber-700');
-        submitBtn.classList.add('bg-cyan-600','hover:bg-cyan-700');
-        if (cancelEditBtn) cancelEditBtn.classList.add('hidden');
+        imagePreview.classList.add("hidden");
+        submitBtnText.textContent = "Añadir Producto a la Tienda";
+        submitBtn.classList.remove("bg-amber-600", "hover:bg-amber-700");
+        submitBtn.classList.add("bg-cyan-600", "hover:bg-cyan-700");
+        if (cancelEditBtn) cancelEditBtn.classList.add("hidden");
         compressedImageBlob = null;
         compressedMeta = null;
         originalFileInfo = null;
