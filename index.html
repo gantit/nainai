@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Nai Nai | Tesoros del Mar</title>
 
-    <!-- Tailwind CSS para un diseño moderno y adaptable -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Google Fonts para una tipografía más bonita -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -48,9 +46,7 @@
     </style>
   </head>
   <body class="text-gray-800 bg-amber-50">
-    <!-- Contenedor principal de la aplicación -->
     <div id="app-container" class="container p-4 mx-auto sm:p-6 lg:p-8">
-      <!-- Cabecera y Navegación (Diseño Mobile-First) -->
       <header
         class="flex flex-col items-center pb-6 mb-8 text-center border-b-2 border-amber-200"
       >
@@ -58,15 +54,16 @@
           <h1 class="text-5xl font-display text-cyan-700">Nai Nai</h1>
           <p class="-mt-1 text-gray-500">Tesoros del Mar</p>
         </div>
-        <nav class="flex space-x-4">
-          <!-- Botones con más padding para ser más fáciles de tocar en móvil -->
+        <nav
+          class="flex flex-col justify-center items-center space-y-3 sm:flex-row sm:space-y-0 sm:space-x-4"
+        >
           <button
             id="show-shop-btn"
             class="px-5 py-2.5 text-sm font-semibold bg-cyan-600 text-white rounded-full shadow-md hover:bg-cyan-700 transition-all"
           >
             Tienda
           </button>
-          <!-- Nuevo botón para descargar el QR -->
+
           <a
             href="QR.pdf"
             download
@@ -76,14 +73,14 @@
           >
             Descargar QR
           </a>
-          <!-- El botón de Administrar ahora está oculto por defecto -->
+
           <button
             id="show-admin-btn"
             class="px-5 py-2.5 text-sm font-semibold bg-white text-gray-700 rounded-full shadow-md hover:bg-gray-100 transition-all hidden"
           >
             Administrar
           </button>
-          <!-- Nuevo botón para ver pedidos (solo en modo admin) -->
+
           <button
             id="show-orders-btn"
             class="px-5 py-2.5 text-sm font-semibold bg-purple-600 text-white rounded-full shadow-md hover:bg-purple-700 transition-all hidden"
@@ -93,17 +90,15 @@
         </nav>
       </header>
 
-      <!-- SECCIÓN TIENDA (PÚBLICA) -->
       <main id="shop-page">
         <h2 class="mb-8 text-3xl font-bold text-center text-cyan-800">
           Nuestros Collares
         </h2>
-        <!-- El grid es mobile-first: 1 columna por defecto, y más en pantallas grandes -->
+
         <div
           id="product-grid"
           class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-8"
         >
-          <!-- Los productos se cargarán aquí desde la base de datos -->
           <div id="loading-products" class="py-10 text-center col-span-full">
             <div class="inline-block loader"></div>
             <p class="mt-4 text-gray-600">Cargando tesoros...</p>
@@ -111,7 +106,6 @@
         </div>
       </main>
 
-      <!-- SECCIÓN ADMINISTRACIÓN (PRIVADA) -->
       <section id="admin-page" class="hidden">
         <div class="max-w-xl p-6 mx-auto bg-white shadow-lg sm:p-8 rounded-2xl">
           <h2 class="mb-6 text-3xl font-bold text-center text-cyan-800">
@@ -228,7 +222,6 @@
         </div>
       </section>
 
-      <!-- SECCIÓN PEDIDOS (ADMIN) -->
       <section id="orders-page" class="hidden">
         <div class="max-w-4xl mx-auto">
           <h2 class="mb-8 text-3xl font-bold text-center text-purple-800">
@@ -240,13 +233,10 @@
             <p class="mt-4 text-gray-600">Cargando pedidos...</p>
           </div>
 
-          <div id="orders-container" class="space-y-4">
-            <!-- Los pedidos se cargarán aquí -->
-          </div>
+          <div id="orders-container" class="space-y-4"></div>
         </div>
       </section>
 
-      <!-- Mensaje de notificación -->
       <div
         id="notification"
         class="fixed hidden px-5 py-3 text-white transition-all duration-300 transform translate-y-16 bg-green-500 rounded-lg shadow-xl bottom-5 right-5"
@@ -254,12 +244,10 @@
         Producto añadido con éxito!
       </div>
 
-      <!-- Footer con versión -->
       <footer class="mt-12 text-center text-xs text-gray-500">
         Versión <span id="app-version">cargando...</span>
       </footer>
 
-      <!-- Modal de pedido -->
       <div
         id="order-modal"
         class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4"
@@ -339,7 +327,6 @@
       </div>
     </div>
 
-    <!-- Cargar configuración externa -->
     <script src="config.js"></script>
     <script src="version.js"></script>
     <script type="module">
