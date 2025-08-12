@@ -10,9 +10,10 @@ const CONFIG = {
     appId: "1:562014512385:web:7f7b106c68c8d4131f2700",
     measurementId: "G-GV9M7MB5F5",
   },
-  // Gemini ahora vía proxy (no exponer apiKey)
-  gemini: {
-    proxyUrl: "https://nai-gemini-proxy.joca.workers.dev",
+  endPoints: {
+    // Cloudflare workers
+    gemini: "https://nai-gemini-proxy.joca.workers.dev",
+    email: "https://nai-email-worker.joca.workers.dev",
   },
 };
 

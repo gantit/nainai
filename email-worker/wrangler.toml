@@ -1,0 +1,5 @@
+name = "nai-email-worker"
+main = "src/index.js"
+compatibility_date = "2025-08-09"
+# Añade tu clave de Resend como variable secreta:
+# wrangler secret put RESEND_API_KEY
