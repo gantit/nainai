@@ -594,22 +594,17 @@ export function setupAddProductForm({ userIdRef, adminMode }) {
       stateRef.price = input.value;
       updatePreview();
     });
-    // En móvil (teclado) Enter suele intentar enviar el formulario: lo redirigimos a "Siguiente"
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        // Validamos el paso actual antes de avanzar
         if (stateRef.price && !isNaN(parseFloat(stateRef.price))) {
-          // Simula click en siguiente si existe
-            const stepObj = steps[current];
-            if (!stepObj.isSummary) {
-              // Avanza
-              current = Math.min(current + 1, steps.length - 1);
-              renderStep();
-            } else {
-              // Estamos en resumen, enviamos
-              submitProduct();
-            }
+          const stepObj = steps[current];
+          if (!stepObj.isSummary) {
+            current = Math.min(current + 1, steps.length - 1);
+            renderStep();
+          } else {
+            submitProduct();
+          }
         }
       }
     });
