@@ -45,13 +45,13 @@
       }
     </style>
   </head>
-  <body class="text-gray-800 bg-amber-50">
-    <div id="app-container" class="container p-4 mx-auto sm:p-6 lg:p-8">
+  <body class="text-gray-800">
+    <div id="app-container" class="mx-auto sm:p-6 lg:p-8">
       <header
         class="flex flex-col items-center pb-6 mb-8 text-center border-b-2 border-amber-200"
       >
         <div class="mb-4">
-          <h1 class="text-5xl font-display text-cyan-700">Nai Nai</h1>
+          <h1 class="text-5xl font-display text-cyan-700 pb-6">Nai Nai</h1>
           <p class="-mt-1 text-gray-500">Tesoros del Mar</p>
         </div>
         <nav
@@ -59,7 +59,7 @@
         >
           <button
             id="show-shop-btn"
-            class="px-5 py-2.5 text-sm font-semibold bg-cyan-600 text-white rounded-full shadow-md hover:bg-cyan-700 transition-all"
+            class="px-5 py-2.5 text-sm brand-btn brand-btn-primary hidden"
           >
             Tienda
           </button>
@@ -68,7 +68,7 @@
             href="QR.pdf"
             download
             id="download-qr-btn"
-            class="px-5 py-2.5 text-sm font-semibold bg-amber-500 text-white rounded-full shadow-md hover:bg-amber-600 transition-all"
+            class="px-5 py-2.5 text-sm brand-btn brand-btn-secondary hidden"
             title="Descargar el código QR para imprimir"
           >
             Descargar QR
@@ -76,14 +76,14 @@
 
           <button
             id="show-admin-btn"
-            class="px-5 py-2.5 text-sm font-semibold bg-white text-gray-700 rounded-full shadow-md hover:bg-gray-100 transition-all hidden"
+            class="px-5 py-2.5 text-sm brand-btn brand-btn-outline hidden"
           >
-            Administrar
+            Crea tu producto
           </button>
 
           <button
             id="show-orders-btn"
-            class="px-5 py-2.5 text-sm font-semibold bg-purple-600 text-white rounded-full shadow-md hover:bg-purple-700 transition-all hidden"
+            class="px-5 py-2.5 text-sm brand-btn brand-btn-accent hidden"
           >
             Pedidos
           </button>
@@ -116,7 +116,7 @@
               <label
                 for="product-name"
                 class="block mb-1 text-sm font-medium text-gray-700"
-                >Nombre del Collar</label
+                >Nombre del Producto</label
               >
               <input
                 type="text"
@@ -210,7 +210,7 @@
             <button
               type="submit"
               id="submit-product-btn"
-              class="flex items-center justify-center w-full px-4 py-3 font-bold text-white transition-colors rounded-lg shadow-lg bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400"
+              class="flex items-center justify-center w-full px-4 py-3 font-bold transition-colors rounded-lg shadow-lg brand-btn brand-btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <span id="submit-btn-text">Añadir Producto a la Tienda</span>
               <div
@@ -224,7 +224,7 @@
 
       <section id="orders-page" class="hidden">
         <div class="max-w-4xl mx-auto">
-          <h2 class="mb-8 text-3xl font-bold text-center text-purple-800">
+          <h2 class="mb-8 text-3xl font-bold text-center brand-title">
             Gestión de Pedidos
           </h2>
 
@@ -252,9 +252,11 @@
         id="order-modal"
         class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4"
       >
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
-          <h3 class="text-xl font-bold text-cyan-800 mb-4">Hacer Pedido</h3>
-          <p class="text-gray-600 mb-4">
+        <div
+          class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-gray-200 brand-order-modal"
+        >
+          <h3 class="text-xl font-bold mb-4 brand-title">Hacer Pedido</h3>
+          <p class="text-gray-600 mb-4 brand-order-intro">
             Producto:
             <span id="order-product-name" class="font-semibold"></span>
           </p>
@@ -271,7 +273,7 @@
                 type="text"
                 id="customer-name"
                 required
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500"
+                class="brand-input w-full px-3 py-2 rounded-lg"
                 placeholder="Ej: María García"
               />
             </div>
@@ -287,7 +289,7 @@
                 id="customer-address"
                 required
                 rows="3"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500"
+                class="brand-input w-full px-3 py-2 rounded-lg"
                 placeholder="Ej: Calle Mayor 15, cerca de la farmacia"
               ></textarea>
             </div>
@@ -302,7 +304,7 @@
               <input
                 type="tel"
                 id="customer-phone"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500"
+                class="brand-input w-full px-3 py-2 rounded-lg"
                 placeholder="Ej: 666 123 456"
               />
             </div>
@@ -311,13 +313,13 @@
               <button
                 type="button"
                 onclick="closeOrderModal()"
-                class="flex-1 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                class="flex-1 brand-btn brand-btn-outline text-sm py-2"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                class="flex-1 px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700"
+                class="flex-1 brand-btn brand-btn-primary text-sm py-2"
               >
                 Confirmar Pedido
               </button>

@@ -1,6 +1,7 @@
 // navigation.js - manejo de navegación y estado admin
 import { fetchOrders } from "./orders.js";
 
+// Unifica la navegación usando el sistema de clases brand-* (tema dinámico)
 export function setupNavigation(adminMode) {
   const shopPage = document.getElementById("shop-page");
   const adminPage = document.getElementById("admin-page");
@@ -9,51 +10,76 @@ export function setupNavigation(adminMode) {
   const showAdminBtn = document.getElementById("show-admin-btn");
   const showOrdersBtn = document.getElementById("show-orders-btn");
 
+  // Guardar clases base originales (para restaurar variante visual)
+  [showShopBtn, showAdminBtn, showOrdersBtn].forEach((btn) => {
+    if (btn) {
+      btn.dataset.originalClasses = btn.className
+        .split(" ")
+        .filter((c) => c !== "hidden" && c !== "active-nav")
+        .join(" ");
+    }
+  });
+
   if (adminMode) {
     showAdminBtn.classList.remove("hidden");
     showOrdersBtn.classList.remove("hidden");
   }
 
+  function activate(btn) {
+    const buttons = [showShopBtn, showAdminBtn, showOrdersBtn];
+    buttons.forEach((b) => {
+      if (!b) return;
+      // Restaurar base original
+      const base = b.dataset.originalClasses || b.className;
+      const wasHidden = b.classList.contains("hidden") && !adminMode;
+      b.className = base;
+      if (wasHidden) b.classList.add("hidden");
+      b.classList.remove("active-nav", "brand-btn-primary");
+      // Botón tienda: degradar a secundaria para contraste, no dejarlo blanco puro
+      if (b.id === "show-shop-btn") {
+        b.classList.remove("brand-btn-primary");
+        if (!b.classList.contains("brand-btn-secondary")) {
+          b.classList.add("brand-btn-secondary");
+        }
+      }
+    });
+    if (btn) {
+      btn.classList.add("active-nav");
+      // Forzar variante primaria para el activo (garantiza contraste)
+      btn.classList.remove(
+        "brand-btn-secondary",
+        "brand-btn-outline",
+        "brand-btn-accent"
+      );
+      btn.classList.add("brand-btn-primary");
+    }
+  }
+
   showShopBtn.addEventListener("click", () => {
+    if (showShopBtn.classList.contains("hidden")) return;
     shopPage.classList.remove("hidden");
     adminPage.classList.add("hidden");
     ordersPage.classList.add("hidden");
-    showShopBtn.className = baseBtnClass("cyan", true);
-    showAdminBtn.className = baseBtnClass();
-    showOrdersBtn.className = ordersBtnClass();
-    if (!adminMode) {
-      showAdminBtn.classList.add("hidden");
-      showOrdersBtn.classList.add("hidden");
-    }
+    activate(showShopBtn);
   });
 
   showAdminBtn.addEventListener("click", () => {
     shopPage.classList.add("hidden");
     adminPage.classList.remove("hidden");
     ordersPage.classList.add("hidden");
-    showAdminBtn.className = baseBtnClass("cyan", true);
-    showShopBtn.className = baseBtnClass();
-    showOrdersBtn.className = ordersBtnClass();
+    activate(showAdminBtn);
   });
 
   showOrdersBtn.addEventListener("click", () => {
     shopPage.classList.add("hidden");
     adminPage.classList.add("hidden");
     ordersPage.classList.remove("hidden");
-    showOrdersBtn.className = ordersBtnClass(true);
-    showShopBtn.className = baseBtnClass();
-    showAdminBtn.className = baseBtnClass();
+    activate(showOrdersBtn);
     fetchOrders(adminMode);
   });
-}
 
-function baseBtnClass(color = "white", active = false) {
-  if (color === "cyan" && active)
-    return "px-5 py-2.5 text-sm font-semibold bg-cyan-600 text-white rounded-full shadow-md hover:bg-cyan-700 transition-all";
-  return "px-5 py-2.5 text-sm font-semibold bg-white text-gray-700 rounded-full shadow-md hover:bg-gray-100 transition-all";
-}
-function ordersBtnClass(active = false) {
-  return active
-    ? "px-5 py-2.5 text-sm font-semibold bg-purple-800 text-white rounded-full shadow-md hover:bg-purple-900 transition-all"
-    : "px-5 py-2.5 text-sm font-semibold bg-purple-600 text-white rounded-full shadow-md hover:bg-purple-700 transition-all";
+  // Estado inicial: si no es admin y el botón tienda está oculto, dejar vista por defecto (shop ya visible en HTML) sin activar nav.
+  if (!showShopBtn.classList.contains("hidden")) {
+    activate(showShopBtn);
+  }
 }
