@@ -94,7 +94,7 @@ function renderRandomGrid(list) {
             <p class='hidden md:block text-[12px] text-gray-600 line-clamp-3'>${
               p.description || ""
             }</p>
-            <p class='md:hidden text-[11px] text-gray-600 line-clamp-1'>${
+            <p class='md:hidden text-[11px] text-gray-600 line-clamp-2'>${
               p.description || ""
             }</p>
           </div>
