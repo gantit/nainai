@@ -134,6 +134,10 @@ export function setupAddProductForm({ userIdRef, adminMode }) {
   const form = document.getElementById("add-product-form");
   if (!form) return;
   if (!adminMode) form.classList.add("hidden");
+  // Evita que Enter en inputs dentro del formulario provoque un submit tradicional (recarga)
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+  });
   form.innerHTML = `
     <div id=\"product-wizard-root\" class=\"flex flex-col gap-6\">
       <div class=\"flex items-center justify-between\">
@@ -589,6 +593,25 @@ export function setupAddProductForm({ userIdRef, adminMode }) {
     input.addEventListener("input", () => {
       stateRef.price = input.value;
       updatePreview();
+    });
+    // En móvil (teclado) Enter suele intentar enviar el formulario: lo redirigimos a "Siguiente"
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        // Validamos el paso actual antes de avanzar
+        if (stateRef.price && !isNaN(parseFloat(stateRef.price))) {
+          // Simula click en siguiente si existe
+            const stepObj = steps[current];
+            if (!stepObj.isSummary) {
+              // Avanza
+              current = Math.min(current + 1, steps.length - 1);
+              renderStep();
+            } else {
+              // Estamos en resumen, enviamos
+              submitProduct();
+            }
+        }
+      }
     });
   }
   function renderSummaryStep(host, step, stateRef) {
