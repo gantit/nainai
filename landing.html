@@ -5,15 +5,6 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>NaiNai · Tesoros Artesanales</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      // Redirige antiguos anchors (por si hay enlaces compartidos) al nuevo app.html
-      (function () {
-        var h = (window.location.hash || "").toLowerCase();
-        if (h === "#admin" || h === "#shop" || h === "#orders") {
-          window.location.replace("./app.html" + h);
-        }
-      })();
-    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -97,6 +88,7 @@
         </div>
       </div>
     </header>
+
     <main class="flex-1" id="explorar">
       <section class="max-w-6xl mx-auto px-6 py-12">
         <div class="flex items-end justify-between mb-6">
@@ -117,6 +109,7 @@
           </div>
         </div>
       </section>
+
       <section id="crear-tienda" class="bg-white/60 border-t border-cyan-100">
         <div class="max-w-4xl mx-auto px-6 py-16 text-center">
           <h3 class="text-3xl font-display text-cyan-700 mb-4">
@@ -139,9 +132,11 @@
         </div>
       </section>
     </main>
+
     <footer class="py-8 text-center text-xs text-gray-500">
       © <span id="year"></span> NaiNai. Inspirando micro‑emprendimientos.
     </footer>
+
     <script src="config.js"></script>
     <script src="version.js"></script>
     <script type="module" src="./js/landing.js"></script>
