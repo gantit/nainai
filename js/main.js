@@ -201,14 +201,66 @@ function injectStoreWizard() {
 
   // --- Configuración del wizard paso a paso ---
   const steps = [
-    { key: "name", label: "¿Cómo se llamará la tienda?", placeholder: "Ej: Tesoros de Sofía", required: true, hint: "El nombre aparecerá como título.", inputType: "text", id: "store-name" },
-    { key: "childName", label: "Nombre del niño/a (para el código admin)", placeholder: "Sofía", required: false, hint: "Usado para generar un código fácil.", inputType: "text", id: "child-name" },
-    { key: "tagline", label: "Eslogan (opcional)", placeholder: "Pequeños tesoros hechos a mano", required: false, hint: "Frase corta que acompaña al título.", inputType: "text", id: "tagline" },
-    { key: "adminEmail", label: "Email para recuperar acceso", placeholder: "tuemail@ejemplo.com", required: true, hint: "Necesario para recuperar el código admin.", inputType: "email", id: "admin-email" },
-    { key: "themeColor", label: "Elige un color principal", placeholder: "#0e7490", required: true, hint: "Afecta botones y acentos.", inputType: "color", id: "theme-color", default: "#0e7490" },
-    { key: "summary", label: "Resumen", isSummary: true, hint: "Revisa y crea tu tienda." },
+    {
+      key: "name",
+      label: "¿Cómo se llamará la tienda?",
+      placeholder: "Ej: Tesoros de Sofía",
+      required: true,
+      hint: "El nombre aparecerá como título.",
+      inputType: "text",
+      id: "store-name",
+    },
+    {
+      key: "childName",
+      label: "Nombre del niño/a (para el código admin)",
+      placeholder: "Sofía",
+      required: false,
+      hint: "Usado para generar un código fácil.",
+      inputType: "text",
+      id: "child-name",
+    },
+    {
+      key: "tagline",
+      label: "Eslogan (opcional)",
+      placeholder: "Pequeños tesoros hechos a mano",
+      required: false,
+      hint: "Frase corta que acompaña al título.",
+      inputType: "text",
+      id: "tagline",
+    },
+    {
+      key: "adminEmail",
+      label: "Email para recuperar acceso",
+      placeholder: "tuemail@ejemplo.com",
+      required: true,
+      hint: "Necesario para recuperar el código admin.",
+      inputType: "email",
+      id: "admin-email",
+    },
+    {
+      key: "themeColor",
+      label: "Elige un color principal",
+      placeholder: "#0e7490",
+      required: true,
+      hint: "Afecta botones y acentos.",
+      inputType: "color",
+      id: "theme-color",
+      default: "#0e7490",
+    },
+    {
+      key: "summary",
+      label: "Resumen",
+      isSummary: true,
+      hint: "Revisa y crea tu tienda.",
+    },
   ];
-  const state = { name: "", childName: "", tagline: "", adminEmail: "", themeColor: "#0e7490" };
+  const state = {
+    name: "",
+    childName: "",
+    tagline: "",
+    adminEmail: "",
+    themeColor: "#0e7490",
+  };
   let current = 0;
   const wrapper = document.getElementById("wizard-step-wrapper");
   const btnNext = document.getElementById("btn-next");
@@ -234,7 +286,17 @@ function injectStoreWizard() {
     if (step.isSummary) {
       return `<div class="animate-fade">
         <h3 class="text-lg font-semibold mb-4">Confirma los datos</h3>
-        <ul class="space-y-2 text-sm">\n<li><span class='font-medium text-gray-600'>Nombre:</span> ${state.name || "-"}</li>\n<li><span class='font-medium text-gray-600'>Niño/a:</span> ${state.childName || "(no indicado)"}</li>\n<li><span class='font-medium text-gray-600'>Eslogan:</span> ${state.tagline || "(vacío)"}</li>\n<li><span class='font-medium text-gray-600'>Email:</span> ${state.adminEmail || "-"}</li>\n<li><span class='font-medium text-gray-600'>Color:</span> <span style='color:${state.themeColor}' class='font-mono'>${state.themeColor}</span></li></ul>
+        <ul class="space-y-2 text-sm">\n<li><span class='font-medium text-gray-600'>Nombre:</span> ${
+          state.name || "-"
+        }</li>\n<li><span class='font-medium text-gray-600'>Niño/a:</span> ${
+        state.childName || "(no indicado)"
+      }</li>\n<li><span class='font-medium text-gray-600'>Eslogan:</span> ${
+        state.tagline || "(vacío)"
+      }</li>\n<li><span class='font-medium text-gray-600'>Email:</span> ${
+        state.adminEmail || "-"
+      }</li>\n<li><span class='font-medium text-gray-600'>Color:</span> <span style='color:${
+        state.themeColor
+      }' class='font-mono'>${state.themeColor}</span></li></ul>
         <p class="mt-4 text-xs text-gray-500">Se generará un código admin basado en el nombre del niño/a.</p>
       </div>`;
     }
@@ -245,8 +307,14 @@ function injectStoreWizard() {
       </div>`;
     }
     return `<div class='space-y-4 animate-fade'>
-      <label class='block text-lg font-medium leading-tight' for='${step.id}'>${step.label}</label>
-      <input id='${step.id}' type='${step.inputType}' value='${state[step.key] || ""}' placeholder='${step.placeholder || ""}' class='w-full px-4 py-3 text-base border rounded-xl focus:ring-2 focus:ring-[var(--brand-base,#0e7490)] focus:outline-none' />
+      <label class='block text-lg font-medium leading-tight' for='${step.id}'>${
+      step.label
+    }</label>
+      <input id='${step.id}' type='${step.inputType}' value='${
+      state[step.key] || ""
+    }' placeholder='${
+      step.placeholder || ""
+    }' class='w-full px-4 py-3 text-base border rounded-xl focus:ring-2 focus:ring-[var(--brand-base,#0e7490)] focus:outline-none' />
     </div>`;
   }
   function renderStep() {
@@ -256,7 +324,10 @@ function injectStoreWizard() {
     btnBack.classList.toggle("hidden", current === 0);
     btnNext.textContent = step.isSummary ? "Crear Tienda" : "Siguiente";
     renderProgress();
-    setTimeout(() => { const input = wrapper.querySelector("input"); input?.focus(); }, 30);
+    setTimeout(() => {
+      const input = wrapper.querySelector("input");
+      input?.focus();
+    }, 30);
     if (step.key === "themeColor") {
       applyThemeColor(state.themeColor);
       updateLiveBrandPreview(state.themeColor);
@@ -268,9 +339,11 @@ function injectStoreWizard() {
         const val = e.target.value;
         state[step.key] = val;
         if (step.key === "name") {
-          document.getElementById("preview-title").textContent = val.trim() || "Nombre Tienda";
+          document.getElementById("preview-title").textContent =
+            val.trim() || "Nombre Tienda";
         } else if (step.key === "tagline") {
-          document.getElementById("preview-tagline").textContent = val.trim() || "Eslogan aparecerá aquí";
+          document.getElementById("preview-tagline").textContent =
+            val.trim() || "Eslogan aparecerá aquí";
         } else if (step.key === "themeColor") {
           if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(val)) {
             applyThemeColor(val);
@@ -288,43 +361,81 @@ function injectStoreWizard() {
     if (!input) return true;
     const val = input.value.trim();
     if (step.required && !val) {
-      input.classList.add("ring-2","ring-red-400");
+      input.classList.add("ring-2", "ring-red-400");
       input.focus();
       return false;
     }
     state[step.key] = val || state[step.key];
-    if (step.key === "themeColor" && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(val)) {
+    if (
+      step.key === "themeColor" &&
+      /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(val)
+    ) {
       applyThemeColor(val);
       updateLiveBrandPreview(val);
       renderCardsPreview(generatePalette(val));
     }
-    if (step.key === "name") document.getElementById("preview-title").textContent = state.name || "Nombre Tienda";
-    if (step.key === "tagline") document.getElementById("preview-tagline").textContent = state.tagline || "Eslogan aparecerá aquí";
+    if (step.key === "name")
+      document.getElementById("preview-title").textContent =
+        state.name || "Nombre Tienda";
+    if (step.key === "tagline")
+      document.getElementById("preview-tagline").textContent =
+        state.tagline || "Eslogan aparecerá aquí";
     return true;
   }
   btnNext.addEventListener("click", async () => {
     if (!persistCurrent()) return;
-    if (steps[current].isSummary) { await submitWizard(); return; }
-    current = Math.min(current + 1, steps.length - 1); renderStep();
+    if (steps[current].isSummary) {
+      await submitWizard();
+      return;
+    }
+    current = Math.min(current + 1, steps.length - 1);
+    renderStep();
   });
-  btnBack.addEventListener("click", () => { current = Math.max(current - 1, 0); renderStep(); });
-  wrapper.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); btnNext.click(); } });
+  btnBack.addEventListener("click", () => {
+    current = Math.max(current - 1, 0);
+    renderStep();
+  });
+  wrapper.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      btnNext.click();
+    }
+  });
   async function submitWizard() {
-    btnNext.disabled = true; btnNext.textContent = "Creando...";
+    btnNext.disabled = true;
+    btnNext.textContent = "Creando...";
     try {
       const { name, childName, tagline, adminEmail, themeColor } = state;
-      const { slug, adminSecret } = await createStore({ name, childName, tagline, themeColor });
+      const { slug, adminSecret } = await createStore({
+        name,
+        childName,
+        tagline,
+        themeColor,
+      });
       if (adminEmail) await addAdminEmail(slug, adminEmail);
       const url = new URL(window.location.href);
-      url.searchParams.set("store", slug); url.searchParams.set("admin", adminSecret);
+      url.searchParams.set("store", slug);
+      url.searchParams.set("admin", adminSecret);
       if (adminEmail && window.CONFIG?.endPoints?.email) {
-        const emailResult = await sendAdminCredentialsEmail({ from: "no-reply@joca.dev", endpoint: window.CONFIG.endPoints.email, to: adminEmail, storeName: name, adminCode: adminSecret, storeUrl: url.toString() });
-        if (!emailResult?.ok) alert("La tienda se creó, pero el email no pudo enviarse. Código: " + adminSecret);
+        const emailResult = await sendAdminCredentialsEmail({
+          from: "no-reply@joca.dev",
+          endpoint: window.CONFIG.endPoints.email,
+          to: adminEmail,
+          storeName: name,
+          adminCode: adminSecret,
+          storeUrl: url.toString(),
+        });
+        if (!emailResult?.ok)
+          alert(
+            "La tienda se creó, pero el email no pudo enviarse. Código: " +
+              adminSecret
+          );
       }
       window.location.href = url.toString();
     } catch (err) {
       alert(err.message || "Error creando la tienda");
-      btnNext.disabled = false; btnNext.textContent = "Crear Tienda";
+      btnNext.disabled = false;
+      btnNext.textContent = "Crear Tienda";
     }
   }
   function updateLiveBrandPreview(hex) {
@@ -334,14 +445,23 @@ function injectStoreWizard() {
     if (titleEl) titleEl.style.color = pal.dark;
     if (tagEl) tagEl.style.color = pal.base;
     const box = document.getElementById("brand-typography-preview");
-    if (box) { box.style.background = pal.soft; box.style.borderColor = pal.base; }
+    if (box) {
+      box.style.background = pal.soft;
+      box.style.borderColor = pal.base;
+    }
   }
   function renderCardsPreview(pal) {
-    const wrap = document.getElementById("cards-preview"); if (!wrap) return; wrap.innerHTML = "";
-    [ { name: "Pulsera Arcoíris", price: "3€" }, { name: "Llavero Estrella", price: "2€" }].forEach(p => {
+    const wrap = document.getElementById("cards-preview");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    [
+      { name: "Pulsera Arcoíris", price: "3€" },
+      { name: "Llavero Estrella", price: "2€" },
+    ].forEach((p) => {
       const card = document.createElement("div");
       card.className = "rounded-lg p-2 flex flex-col gap-1 text-[12px] border";
-      card.style.background = "#fff"; card.style.borderColor = pal.base;
+      card.style.background = "#fff";
+      card.style.borderColor = pal.base;
       card.innerHTML = `<div class='aspect-square w-full rounded-md mb-1 flex items-center justify-center text-[11px]' style='background:${pal.soft};color:${pal.dark};'>IMG</div>
         <div class='font-semibold leading-tight' style='color:${pal.dark};'>${p.name}</div>
         <div class='flex items-center justify-between mt-auto'>
