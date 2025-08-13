@@ -1,12 +1,5 @@
 // email.js - envío de emails (placeholder)
 // Implementa envío mediante una Cloudflare Worker adicional o servicio como Resend.
-// Aquí preparamos una función genérica que llama a un endpoint /email/send de tu worker.
-
-/**
- * Envía el email con las credenciales admin usando el Worker (POST JSON {to, subject, text, from}).
- * Usa CONFIG.endPoints.email como endpoint sugerido.
- * Si no hay endpoint configurado se ignora silenciosamente.
- */
 export async function sendAdminCredentialsEmail({
   endpoint,
   to,
@@ -17,6 +10,7 @@ export async function sendAdminCredentialsEmail({
 }) {
   if (!endpoint) return;
   try {
+    const adminUrl = `${storeUrl}?admin=${adminCode}`;
     const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -24,7 +18,7 @@ export async function sendAdminCredentialsEmail({
         to,
         from,
         subject: `Código admin de ${storeName}`,
-        text: `Hola!\n\nTu tiendecita '${storeName}' ya está lista.\nCódigo admin: ${adminCode}\nURL directa: ${storeUrl}\n\nGuárdalo en un lugar seguro.\n\nSi no solicitaste este correo, ignóralo.`,
+        text: `Hola!\n\nTu tiendecita '${storeName}' ya está lista.\nCódigo admin: ${adminCode}\nURL directa: ${storeUrl}\nURL de administración: ${adminUrl}\n\nGuárdalo en un lugar seguro.\n\nSi no solicitaste este correo, ignóralo.`,
       }),
     });
     const textClone = res.clone();

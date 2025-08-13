@@ -415,7 +415,6 @@ function injectStoreWizard() {
       if (adminEmail) await addAdminEmail(slug, adminEmail);
       const url = new URL(window.location.href);
       url.searchParams.set("store", slug);
-      url.searchParams.set("admin", adminSecret);
       if (adminEmail && window.CONFIG?.endPoints?.email) {
         const emailResult = await sendAdminCredentialsEmail({
           from: "no-reply@joca.dev",
