@@ -72,9 +72,17 @@ function renderRandomGrid(list) {
     return;
   }
   list.forEach((p) => {
-    const card = document.createElement("div");
+    const card = document.createElement("a");
+    const hrefBase = p.store
+      ? `./app?store=${encodeURIComponent(p.store)}`
+      : "#";
+    const href = p.id
+      ? `${hrefBase}&product=${encodeURIComponent(p.id)}`
+      : hrefBase;
+    card.href = href;
     card.className =
-      "group rounded-2xl overflow-hidden bg-white border border-cyan-100 shadow-sm hover:shadow transition flex md:flex-col";
+      "group rounded-2xl overflow-hidden bg-white border border-cyan-100 shadow-sm hover:shadow transition flex md:flex-col focus:outline-none focus:ring-2 focus:ring-cyan-300";
+    card.setAttribute("aria-label", `Ver tienda ${p.store || ""}`.trim());
     card.innerHTML = `
       <div class='flex md:flex-col gap-3 md:gap-0 p-3 md:p-0 w-full'>
         <div class='flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-gray-100 md:w-full md:aspect-square md:rounded-none'>

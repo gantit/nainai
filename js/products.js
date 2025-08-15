@@ -62,14 +62,14 @@ export function fetchProducts() {
         productsCache[d.id] = product;
         const baseCardClasses =
           "brand-card group relative transition-all duration-300 transform rounded-xl hover:-translate-y-1 shadow-md hover:shadow-lg";
-        const adminAttrs = adminMode
-          ? `data-id=\"${d.id}\" class=\"${baseCardClasses} ring-2 ring-transparent hover:ring-amber-400 cursor-pointer overflow-hidden\"`
-          : `class=\"${baseCardClasses} overflow-hidden\"`;
+        const outerAttrs = adminMode
+          ? `data-id="${d.id}" data-pid="${d.id}" class="${baseCardClasses} ring-2 ring-transparent hover:ring-amber-400 cursor-pointer overflow-hidden"`
+          : `data-pid="${d.id}" class="${baseCardClasses} overflow-hidden"`;
         const editBadge = adminMode
           ? `<span class=\"absolute top-2 left-2 z-10 text-[10px] font-semibold bg-amber-500 text-white px-2 py-0.5 rounded-full shadow\">Editar</span><button data-delete-id=\"${d.id}\" class=\"absolute top-2 right-2 z-10 bg-red-600/90 hover:bg-red-700 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shadow focus:outline-none\" title=\"Eliminar\">✕</button>`
           : "";
         productGrid.innerHTML += `
-        <div ${adminAttrs}>
+        <div ${outerAttrs}>
           ${editBadge}
           <div class=\"w-full aspect-square overflow-hidden bg-gray-100\">
             <img src=\"${product.imageUrl}\" alt=\"${product.name}\" class=\"object-cover w-full h-full transition-transform duration-300 group-hover:scale-105\" />
@@ -84,6 +84,21 @@ export function fetchProducts() {
           </div>
         </div>`;
       });
+
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const pid = params.get("product");
+        if (pid) {
+          const target = productGrid.querySelector(`[data-pid="${pid}"]`);
+          if (target) {
+            target.classList.add("ring-2", "ring-amber-400", "animate-pulse");
+            target.scrollIntoView({ behavior: "smooth", block: "center" });
+            setTimeout(() => target.classList.remove("animate-pulse"), 3000);
+          }
+        }
+      } catch (e) {
+        /* noop */
+      }
     },
     (err) => {
       console.error("Error al cargar productos", err);
