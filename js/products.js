@@ -282,6 +282,9 @@ export function setupAddProductForm({ userIdRef, adminMode }) {
         preview.imgBox.innerHTML = `<img src='${state.imageDataUrl}' class='object-cover w-full h-full' alt='preview'/>`;
       } else if (editingProductId && existingImageDataUrl) {
         preview.imgBox.innerHTML = `<img src='${existingImageDataUrl}' class='object-cover w-full h-full' alt='preview'/>`;
+      } else {
+        // Reset a placeholder when no image is present
+        preview.imgBox.innerHTML = `IMG`;
       }
     }
   }
@@ -405,9 +408,11 @@ export function setupAddProductForm({ userIdRef, adminMode }) {
       alert(err.message || "Error guardando producto");
     } finally {
       btnNext.disabled = false;
-      btnNext.textContent = editingProductId
-        ? "Guardar Cambios"
-        : "Guardar Tesoro";
+      // Ajusta el texto del botón según el paso actual
+      const stepNow = steps[current];
+      btnNext.textContent = stepNow && stepNow.isSummary
+        ? (editingProductId ? "Guardar Cambios" : "Guardar Tesoro")
+        : "Siguiente";
     }
   }
 

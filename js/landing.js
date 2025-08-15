@@ -122,7 +122,7 @@ async function loadRandomProducts() {
   loadingBlock?.classList.remove("hidden");
   try {
     const all = await fetchAllProducts(250);
-    const picked = pickRandom(all, 12);
+    const picked = pickRandom(all, 4);
     renderRandomGrid(picked);
   } catch (e) {
     console.warn(e);
